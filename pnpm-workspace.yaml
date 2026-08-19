@@ -1,0 +1,9 @@
+packages:
+  - "packages/*"
+  - "apps/*"
+
+# pnpm >=10 bloqueia scripts de build por padrão, para reduzir superfície de
+# supply-chain. esbuild é dependência do vitest e precisa do postinstall para
+# baixar o binário nativo da plataforma.
+allowBuilds:
+  esbuild: true
