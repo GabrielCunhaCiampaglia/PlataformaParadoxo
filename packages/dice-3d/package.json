@@ -1,0 +1,23 @@
+{
+  "name": "@paradoxo/dice-3d",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "main": "./src/index.ts",
+  "types": "./src/index.ts",
+  "scripts": {
+    "test": "vitest run",
+    "typecheck": "tsc --noEmit",
+    "bench": "tsx bench/harness.ts"
+  },
+  "dependencies": {
+    "@paradoxo/rules": "workspace:*",
+    "cannon-es": "^0.20.0"
+  },
+  "devDependencies": {
+    "@types/node": "^26.2.0",
+    "tsx": "^4.20.6",
+    "typescript": "^5.9.3",
+    "vitest": "^3.2.4"
+  }
+}

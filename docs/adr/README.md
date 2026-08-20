@@ -15,7 +15,7 @@ que a substitui.
 | [0007](0007-stack-frontend.md) | React + Vite + TypeScript obrigatório | Aceita |
 | [0008](0008-i18n.md) | i18n com chaves estáveis | Aceita |
 | [0009](0009-tempo-real.md) | Feed de rolagens em tempo real | Aceita |
-| [0010](0010-rolagem-3d.md) | Rolagem 3D: three.js + cannon-es, com rotulagem pós-simulação | Aceita, condicionada à PoC |
+| [0010](0010-rolagem-3d.md) | Rolagem 3D: three.js + cannon-es, com rotulagem pós-simulação | Aceita — PoC aprovada no desktop |
 | [0011](0011-deploy-e-infraestrutura.md) | Deploy e infraestrutura de custo zero | Aceita |
 
 **0005 e 0006 são as decisões estruturantes.** Ambas nascem do mesmo fato: o sistema de

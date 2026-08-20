@@ -1,6 +1,6 @@
 # ADR-0010 — Rolagem 3D: three.js imperativo + cannon-es, com rotulagem pós-simulação
 
-**Data:** 2026-08-19 · **Status:** Aceita, condicionada à prova de conceito
+**Data:** 2026-08-19 · **Status:** Aceita — PoC Dias 1 e 2 aprovados em 20/08/2026 (0,002% de degeneração em 50.000 simulações). Falta o Dia 3, em Android real.
 
 ## Contexto
 

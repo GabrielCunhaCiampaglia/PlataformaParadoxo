@@ -146,6 +146,60 @@ Sem câmera livre, a opção 1 é suficiente e é a recomendação.
 
 ## 4. Prova de conceito — 3 dias
 
+> ## ✅ RESULTADO — Dias 1 e 2 APROVADOS (20/08/2026)
+>
+> **50.000 simulações headless. 1 rodada degenerada — 0,002%**, contra um critério
+> de morte de 2%. A hipótese H1 sobrevive no desktop.
+>
+> | Cenário | Rodadas | Degeneradas | p50 | **p95** | p95 passos |
+> |---|---:|---:|---:|---:|---:|
+> | **2×d10 (o d100)** | 35.000 | **0,00%** | 3,5 ms | **11,2 ms** | 207 |
+> | 1×d20 | 5.000 | 0,00% | 1,7 ms | 6,7 ms | 185 |
+> | 3×d6 | 5.000 | 0,00% | 4,2 ms | 11,4 ms | 179 |
+> | 10×d6 (pior caso) | 2.500 | 0,00% | 40,5 ms | 99,7 ms | 229 |
+> | 2×d4 + 2×d8 | 2.500 | 0,04% | 6,4 ms | 15,7 ms | 178 |
+>
+> | Critério | Limite | Medido | |
+> |---|---|---|---|
+> | Rodadas degeneradas | < 2% | **0,002%** | ✅ |
+> | 2×d10 p95 | < 30 ms | **11,2 ms** | ✅ |
+> | 10×d6 p95 | < 120 ms | **99,7 ms** | ✅ |
+> | Toda face alcançável | 0 faltando | **0** | ✅ |
+> | Leitura visual = motor | 100% | **100%** | ✅ |
+>
+> **Cobertura de faces** (Dia 2): nenhuma face inalcançável em nenhum sólido. Desvio
+> entre a face mais e a menos frequente: **d10 4,6%** · d4 5,7% · d8 7,0% · d6 14,5% ·
+> d20 28,4%. A distribuição não precisa ser uniforme — o motor decide o número — mas
+> precisa cobrir tudo, e cobre.
+>
+> **Teste de fogo** (Dia 2): 100 rolagens forçadas a `1`, `50` e `100`, mais 300
+> rolagens reais do motor. A leitura da face bateu com o motor em **100% dos casos**.
+>
+> ### O que foi preciso tunar
+>
+> Os números acima são *depois* do tuning que o próprio plano previa. Sem ele, a taxa
+> de degeneração era de 60%. Quatro mudanças resolveram:
+>
+> | Ajuste | De | Para | Por quê |
+> |---|---|---|---|
+> | **`world.step()`** | `fixedStep()` | `step()` | `fixedStep` consulta o relógio real para decidir quantos sub-passos dar. Num loop headless que roda em microssegundos, o tempo simulado quase não avança — **100% de `no-rest`** |
+> | **Damping** | nenhum | linear 0,06 / angular 0,14 | É o que faz um dado real parar de rolar. Sem isso, giram indefinidamente |
+> | **Restituição / atrito** | 0,28 / 0,35 | 0,12 / 0,60 | Dado de verdade quica pouco e agarra no feltro |
+> | **Tray adaptativo** | fixo 6,4 × 6,4 | `1,55·√n + 1,1` | 10 dados não cabiam num tray fixo, e 100% das rodadas de `10×d6` degeneravam |
+>
+> Uma varredura de `solver.iterations` de 8 a 20 deu **0% de degeneração em todas**,
+> mostrando que o custo é dominado pelos passos até assentar, não pelo solver.
+> Fixado em **12**.
+>
+> ### O que falta
+>
+> **Dia 3 — medição em Android intermediário real.** Os números acima são de desktop.
+> A margem é confortável (11,2 ms contra um teto de 30), mas celular intermediário
+> costuma ser 3× a 5× mais lento, e falta medir fps com o `ColorBends` no mesmo
+> contexto e a temperatura da bateria após 60 minutos.
+
+---
+
 A decisão está **condicionada** a esta validação. O risco todo está concentrado numa hipótese.
 
 > **H1 — `cannon-es` leva de 2 a 10 poliedros convexos ao repouso, headless, de forma
