@@ -1,0 +1,13 @@
+{
+  // Deploy do PWA como Worker com assets estáticos.
+  // Fica DENTRO de apps/web de propósito: o wrangler 4.x se recusa a rodar na
+  // raiz de um workspace pnpm ("application detection logic ... in the root of
+  // a workspace"). Rodando daqui, ele tem um projeto único para mirar.
+  "$schema": "../../node_modules/wrangler/config-schema.json",
+  "name": "plataformaparadoxo",
+  "compatibility_date": "2026-08-20",
+  "assets": {
+    "directory": "./dist",
+    "not_found_handling": "single-page-application"
+  }
+}
