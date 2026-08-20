@@ -8,7 +8,7 @@
     "build": "tsc --noEmit && vite build",
     "preview": "vite preview",
     "typecheck": "tsc --noEmit",
-    "cf-deploy": "wrangler deploy"
+    "cf-deploy": "pnpm run build && wrangler deploy"
   },
   "dependencies": {
     "@paradoxo/rules": "workspace:*",
