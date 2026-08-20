@@ -6,4 +6,5 @@ packages:
 # supply-chain. esbuild é dependência do vitest e precisa do postinstall para
 # baixar o binário nativo da plataforma.
 allowBuilds:
+  '@swc/core': true
   esbuild: true

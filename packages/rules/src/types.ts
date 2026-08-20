@@ -27,6 +27,11 @@ export interface DamageConfig {
   dice: number[];
   allowModifier: boolean;
   allowMixedDice: boolean;
+  /**
+   * Ids de faixa da Rolagem de Ação que MAXIMIZAM o dano em vez de rolá-lo.
+   * Ficha oficial: no Extremo (1), o dano é o máximo do dado. Ver doc 09 §9.3.
+   */
+  maximizeOnOutcome: string[];
 }
 
 export interface Ruleset {

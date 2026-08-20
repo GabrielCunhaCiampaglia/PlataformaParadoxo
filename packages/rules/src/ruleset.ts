@@ -30,9 +30,21 @@ export const PARADOXO_EPIFANICO_V1: Ruleset = {
     onMissingSkill: 'raw',
   },
   damage: {
-    // Sem D12: o sistema não usa. Confirmar em C1.
+    // A ficha oficial lista exatamente estes, sem D12 (doc 09 §9.1).
     dice: [2, 3, 4, 6, 8, 10, 20, 30, 40, 50, 60, 70, 80, 90, 100],
-    allowModifier: false, // → C2
-    allowMixedDice: false, // → C5
+
+    // Corrigidos em 20/08/2026 com a ficha oficial. A tabela de auto-ataque tem
+    // "1d10 + Acessórios" (modificador) e "1d6 + 1d100 Resistência" (dados mistos).
+    allowModifier: true,
+    allowMixedDice: true,
+
+    /**
+     * Ficha oficial, p.7: "Se cair extremo, o dano deverá ser o máximo, ou seja,
+     * o chute dará 6 de dano. Se cair os sucessos, o jogador terá que rolar o dano."
+     *
+     * A rolagem de Ação `1` maximiza o dano sem rolar. Liga Ação e Dano numa
+     * sequência única. Ver doc 09 §9.3.
+     */
+    maximizeOnOutcome: ['extreme'],
   },
 };

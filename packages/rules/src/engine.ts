@@ -134,3 +134,26 @@ export function rollDamage(
 
   return { kind: 'damage', expression: `${quantity}d${sides}`, dice, total };
 }
+
+/**
+ * Dano máximo, sem rolar. Usado quando a Rolagem de Ação caiu numa faixa listada
+ * em `ruleset.damage.maximizeOnOutcome` — no Extremo (1), pela ficha oficial.
+ */
+export function maximizeDamage(ruleset: Ruleset, input: DamageInput): DamageResult {
+  const { sides, quantity } = input;
+
+  if (!ruleset.damage.dice.includes(sides)) {
+    throw new RulesError(`O dado D${sides} não faz parte do catálogo do sistema`);
+  }
+  if (!Number.isInteger(quantity) || quantity < 1) {
+    throw new RulesError('A quantidade de dados precisa ser um inteiro maior que zero');
+  }
+
+  const dice: DieRoll[] = Array.from({ length: quantity }, () => ({ sides, value: sides }));
+  return { kind: 'damage', expression: `${quantity}d${sides}`, dice, total: sides * quantity };
+}
+
+/** A faixa da Ação maximiza o dano em vez de rolá-lo? */
+export function shouldMaximize(ruleset: Ruleset, outcome: string | null): boolean {
+  return outcome !== null && ruleset.damage.maximizeOnOutcome.includes(outcome);
+}

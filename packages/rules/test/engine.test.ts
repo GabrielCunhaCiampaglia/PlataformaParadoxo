@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { rollAction, rollDamage, rollPercentile } from '../src/engine.js';
+import { maximizeDamage, rollAction, rollDamage, rollPercentile, shouldMaximize } from '../src/engine.js';
 import { PARADOXO_EPIFANICO_V1 as RS } from '../src/ruleset.js';
 import type { RNG } from '../src/types.js';
 
@@ -196,5 +196,33 @@ describe('Rolagem de Dano', () => {
     expect(() => rollDamage(RS, { sides: 6, quantity: 0 })).toThrow(/maior que zero/);
     expect(() => rollDamage(RS, { sides: 6, quantity: 2.5 })).toThrow(/inteiro/);
     expect(() => rollDamage(RS, { sides: 6, quantity: 101 })).toThrow(/100/);
+  });
+});
+
+describe('Crítico maximiza o dano — ficha oficial p.7', () => {
+  it('Extremo maximiza sem rolar', () => {
+    expect(shouldMaximize(RS, 'extreme')).toBe(true);
+    // O exemplo literal da ficha: chute (1d6) no Extremo dá 6.
+    const r = maximizeDamage(RS, { sides: 6, quantity: 1 });
+    expect(r.total).toBe(6);
+    expect(r.dice).toEqual([{ sides: 6, value: 6 }]);
+  });
+
+  it('maximiza cada dado de uma rolagem múltipla', () => {
+    expect(maximizeDamage(RS, { sides: 20, quantity: 2 }).total).toBe(40);
+  });
+
+  it('as demais faixas rolam normalmente', () => {
+    for (const o of ['good', 'normal', 'fail', 'disaster', null]) {
+      expect(shouldMaximize(RS, o)).toBe(false);
+    }
+  });
+});
+
+describe('Config de dano corrigida com a ficha oficial', () => {
+  it('permite modificador e dados mistos', () => {
+    // "1d10 + Acessórios" e "1d6 + 1d100 Resistência" — doc 09 §9.1
+    expect(RS.damage.allowModifier).toBe(true);
+    expect(RS.damage.allowMixedDice).toBe(true);
   });
 });
