@@ -268,6 +268,68 @@ confinada ao pacote.
 
 ---
 
+## 4.1 Módulo construído — 26/08/2026
+
+`packages/dice-3d` está completo e verificado clicando na interface.
+
+| Arquivo | Papel |
+|---|---|
+| `polyhedra.ts` | As 5 geometrias, normalizadas para raio 1 |
+| `geometry.ts` | `BufferGeometry` com UVs por face e orientação do texto |
+| `texture.ts` | Atlas de números desenhado em canvas |
+| `simulate.ts` | Física headless, gravação e escolha da face lida |
+| `label.ts` | Rotulagem pós-simulação |
+| `renderer.ts` | Cena, materiais, iluminação, reprodução e revelação |
+
+### Verificação na interface
+
+Clicando no botão, em viewport de celular (375 × 812):
+
+| Item | Resultado |
+|---|---|
+| Número na face bate com o motor | ✅ nos 5 sólidos |
+| Dado contido no tray | ✅ `contained: true` |
+| Dado visível no enquadramento | ✅ `onScreen: true` |
+| Simulações descartadas | 0 |
+| Custo de simulação | 12 – 30 ms |
+| HUD, dados e histórico consistentes | ✅ `50 + 7 = 57 · Sucesso Normal · perícia 60` |
+
+### Três defeitos que só a verificação visual pegou
+
+Nenhum deles falhava em teste unitário. Todos exigiram olhar a imagem.
+
+1. **O shader não compilava.** O three.js só declara o varying `vUv` quando o material tem
+   algum mapa. Sem `defines.USE_UV`, o dado sumia da tela e **só a sombra aparecia**.
+
+2. **A linha do atlas estava invertida.** `CanvasTexture` usa `flipY = true`, então a linha 0
+   do canvas é lida pela última linha de V. O sintoma enganava: sólidos com número **ímpar**
+   de colunas têm uma linha central invariante, então d6 e d20 acertavam de vez em quando; o
+   **d10** (4 colunas, nenhuma linha invariante) **nunca** mostrava número; e o **d4** (2 × 2,
+   todas as células ocupadas) mostrava sempre um número — **o errado**, que é a pior falha
+   possível num dado. Teste de regressão em `test/atlas.test.ts`.
+
+3. **Travamento com a aba em segundo plano.** `requestAnimationFrame` não dispara com a aba
+   oculta, e a Promise da animação nunca resolvia: o app ficava preso em "Rolando…" para
+   sempre. Resolvido com um watchdog por relógio.
+
+### Ajustes de legibilidade
+
+- **Só a face que assentou recebe número** (§3.2, opção 1). Com todas numeradas, o jogador
+  via quatro ou cinco números e não sabia qual era o resultado.
+- **Câmera a ~78° de elevação**, mirando onde os dados pararam e não o tray inteiro. Antes
+  metade do quadro ficava vazia e a cobertura era de 3,8%; hoje fica entre 15% e 43%.
+- **Texto orientado pela rotação final** do dado, para o número sair de pé.
+- **6 e 9 sublinhados**, para não se confundirem de cabeça para baixo.
+
+### Pendência conhecida
+
+O bundle está em **226 KB gz**, acima do orçamento de ~155 KB da §5. A causa é
+`import * as THREE`, que impede o tree-shaking; trocar por importações nomeadas deve
+recuperar boa parte. Não impede o uso, mas precisa ser resolvido antes de considerar a
+frente de Dados concluída.
+
+---
+
 ## 5. Orçamento de bundle (gzip)
 
 | Módulo | Orçamento | Real |

@@ -36,6 +36,8 @@ export interface SimOptions {
   maxSteps?: number;
   /** Gravar os frames custa memória; o benchmark desliga. */
   record?: boolean;
+  /** Direção da cena para o observador, usada ao escolher a face lida. */
+  viewDir?: readonly [number, number, number];
 }
 
 /** PRNG semeado — reprodutibilidade nos testes e no benchmark. */
@@ -55,8 +57,13 @@ const REST_FRAMES = 6;
 const REST_LINEAR = 0.25;
 const REST_ANGULAR = 0.35;
 
-/** O tray cresce com a quantidade de dados: 10d6 nao cabem em 6,4 x 6,4. */
-function trayHalfFor(count: number): number { return Math.max(3.2, 1.55 * Math.sqrt(count) + 1.1); }
+/**
+ * O tray cresce com a quantidade de dados. Ajustado para ser JUSTO: com folga
+ * demais, dois dados viravam manchas de 4% da tela e o número ficava ilegível.
+ */
+export function trayHalfFor(count: number): number {
+  return Math.max(1.9, 1.15 * Math.sqrt(count) + 0.8);
+}
 
 function toShape(p: Polyhedron): CANNON.ConvexPolyhedron {
   return new CANNON.ConvexPolyhedron({
@@ -91,20 +98,41 @@ function normalsFor(id: string): [number, number, number][] {
 }
 
 /**
- * Qual face está voltada para cima: a normal que, girada pelo quaternion do
- * corpo, tem a maior componente +Y.
+ * Qual face o observador está lendo.
+ *
+ * Por padrão é a face mais voltada para cima — o critério de um dado na mesa.
+ * Mas nem todo sólido tem uma face horizontal no repouso: o d10 é um
+ * trapezoedro, ele apoia num kite e o kite oposto fica inclinado ~43°. A face
+ * de maior componente Y ficava quase de perfil para a câmera, e o número
+ * simplesmente não era visível.
+ *
+ * Passando a direção de onde se olha, a face escolhida passa a ser a que o
+ * jogador de fato lê. Como a numeração é atribuída DEPOIS (ADR-0010), isso não
+ * afeta a justiça do resultado — só a legibilidade.
+ *
+ * @param viewDir Direção da cena para o observador. Padrão: +Y.
  */
-export function topFaceOf(dieId: string, q: CANNON.Quaternion): number {
+export function topFaceOf(
+  dieId: string,
+  q: CANNON.Quaternion,
+  viewDir: readonly [number, number, number] = [0, 1, 0],
+): number {
   const normals = normalsFor(dieId);
   const v = new CANNON.Vec3();
+  const len = Math.hypot(viewDir[0], viewDir[1], viewDir[2]) || 1;
+  const dx = viewDir[0] / len;
+  const dy = viewDir[1] / len;
+  const dz = viewDir[2] / len;
+
   let best = -Infinity;
   let bestIndex = 0;
   for (let i = 0; i < normals.length; i++) {
     const n = normals[i]!;
     v.set(n[0], n[1], n[2]);
     q.vmult(v, v);
-    if (v.y > best) {
-      best = v.y;
+    const score = v.x * dx + v.y * dy + v.z * dz;
+    if (score > best) {
+      best = score;
       bestIndex = i;
     }
   }
@@ -112,7 +140,7 @@ export function topFaceOf(dieId: string, q: CANNON.Quaternion): number {
 }
 
 export function simulate(opts: SimOptions): SimResult {
-  const { dice, seed, maxSteps = 420, record = false } = opts;
+  const { dice, seed, maxSteps = 420, record = false, viewDir } = opts;
   const rng = mulberry32(seed);
   const t0 = performance.now();
 
@@ -142,10 +170,33 @@ export function simulate(opts: SimOptions): SimResult {
     floor.quaternion.setFromEuler(-Math.PI / 2, 0, 0);
     world.addBody(floor);
 
+    // FORMAÇÃO DE ARREMESSO — calculada ANTES das paredes, porque a parede da
+    // frente precisa ficar atrás do dado mais distante.
+    //
+    // Duas restrições brigam entre si: dois dados não podem nascer a menos de
+    // 2 unidades um do outro (todos têm raio 1, senão nascem interpenetrados e o
+    // solver os cospe para fora), e a fileira precisa caber entre as laterais.
+    // A saída é o zigue-zague: 1,8 de separação lateral com 1,3 de defasagem em
+    // profundidade dá √(1,8² + 1,3²) ≈ 2,22 de distância real.
+    const SPREAD_X = 1.8;
+    const ZIGZAG_Z = 1.3;
+    const ROW_GAP = 2.4;
+    const cols = Math.max(
+      1,
+      Math.min(dice.length, Math.floor((2 * TRAY_HALF - 2) / SPREAD_X) + 1),
+    );
+    const rows = Math.ceil(dice.length / cols);
+    const spawnZ = (i: number) =>
+      TRAY_HALF * 1.35 + (i % 2) * ZIGZAG_Z + Math.floor(i / cols) * ROW_GAP;
+
+    // A parede da FRENTE fica atrás de TODA a formação. Com ela colada no tray,
+    // as fileiras de trás nasciam do lado de fora e ficavam presas ali — era o
+    // que reprovava 18% das rolagens de 10 dados.
+    const FRONT = TRAY_HALF * 1.35 + ZIGZAG_Z + (rows - 1) * ROW_GAP + 2.5;
     const walls: Array<[number, number, number, number]> = [
       [TRAY_HALF, 0, 0, -Math.PI / 2],
       [-TRAY_HALF, 0, 0, Math.PI / 2],
-      [0, 0, TRAY_HALF, Math.PI],
+      [0, 0, FRONT, Math.PI],
       [0, 0, -TRAY_HALF, 0],
     ];
     for (const [x, y, z, ry] of walls) {
@@ -169,15 +220,34 @@ export function simulate(opts: SimOptions): SimResult {
         linearDamping: 0.06,
         angularDamping: 0.14,
       });
-      // Arremesso: espalhados, caindo de alturas ligeiramente diferentes.
-      // Grade, para 10 dados nao nascerem uns dentro dos outros.
-      const cols = Math.ceil(Math.sqrt(dice.length));
-      const gap = (TRAY_HALF * 1.5) / cols;
-      const cx = (i % cols) - (cols - 1) / 2;
-      const cz = Math.floor(i / cols) - (cols - 1) / 2;
-      body.position.set(cx * gap + (rng() - 0.5) * 0.25, 2.2 + (i % 3) * 0.8 + rng() * 0.5, cz * gap + (rng() - 0.5) * 0.25);
-      body.velocity.set((rng() - 0.5) * 3.5, -2.5 - rng() * 1.5, (rng() - 0.5) * 3.5);
-      body.angularVelocity.set((rng() - 0.5) * 13, (rng() - 0.5) * 13, (rng() - 0.5) * 13);
+      // ARREMESSO: os dados são atirados de fora da tela, pela base, cruzam o
+      // tray em arco e batem na parede do fundo. É bem mais bonito que deixá-los
+      // cair de cima — dá para ver os dados CHEGANDO.
+      //
+      // Nascem atrás da parede da frente (que fica em FRONT, mais longe) e por
+      // isso fora do enquadramento da câmera.
+      const lane = cols > 1 ? (i % cols) - (cols - 1) / 2 : 0;
+      const row = Math.floor(i / cols);
+
+      // A altura importa: nascendo com o centro a y≈1 o dado já encosta no chão,
+      // o atrito come a velocidade no primeiro passo e ele para onde nasceu.
+      // Voando a y≈2 ele cruza o tray antes do primeiro toque.
+      body.position.set(
+        lane * SPREAD_X + (rng() - 0.5) * 0.25,
+        1.9 + row * 0.45 + rng() * 0.45,
+        spawnZ(i) + rng() * 0.2,
+      );
+      // Forte em −Z para atravessar o tray, com componente vertical que faz o
+      // arco. A gravidade traz de volta antes de bater na parede do fundo.
+      body.velocity.set(
+        lane * -1.1 + (rng() - 0.5) * 1.4,
+        1.4 + rng() * 1.2,
+        // As fileiras de trás nascem mais longe: sem impulso extra elas param
+        // no meio do caminho e o dado fica fora do tray.
+        // Quanto mais atrás nasce, mais impulso precisa para alcançar o tray.
+        -(6.2 + (spawnZ(i) - TRAY_HALF * 1.35) * 1.35 + rng() * 2.2),
+      );
+      body.angularVelocity.set((rng() - 0.5) * 16, (rng() - 0.5) * 16, (rng() - 0.5) * 16);
       body.quaternion.setFromEuler(rng() * Math.PI * 2, rng() * Math.PI * 2, rng() * Math.PI * 2);
       world.addBody(body);
       bodies.push(body);
@@ -224,7 +294,7 @@ export function simulate(opts: SimOptions): SimResult {
       if (b.position.y < -0.5) {
         return { ok: false, degeneracy: 'below-floor', steps, cpuMs, frames, topFaces: [] };
       }
-      if (Math.abs(b.position.x) > TRAY_HALF + 1 || Math.abs(b.position.z) > TRAY_HALF + 1) {
+      if (Math.abs(b.position.x) > TRAY_HALF + 1 || Math.abs(b.position.z) > TRAY_HALF + 1.2) {
         return { ok: false, degeneracy: 'out-of-tray', steps, cpuMs, frames, topFaces: [] };
       }
       if (b.position.y > TRAY_WALL_H) {
@@ -232,7 +302,7 @@ export function simulate(opts: SimOptions): SimResult {
       }
     }
 
-    const topFaces = bodies.map((b, i) => topFaceOf(dice[i]!, b.quaternion));
+    const topFaces = bodies.map((b, i) => topFaceOf(dice[i]!, b.quaternion, viewDir));
     return { ok: true, steps, cpuMs, frames, topFaces };
   } catch {
     return {

@@ -12,3 +12,4 @@ coverage/
 .wrangler/
 supabase/.temp/
 dist/
+.snapshots/

@@ -219,12 +219,28 @@ function icosahedron(): Polyhedron {
 
 // ---------------------------------------------------------------- registro
 
+/**
+ * Escala o sólido para que o vértice mais distante fique a `radius` do centro.
+ *
+ * Sem isto os dados teriam tamanhos MUITO diferentes na mesa — o cubo nasce com
+ * raio 1,73 e o icosaedro com 1,90, contra 1,00 do d10. Visualmente um d6
+ * pareceria quase o dobro de um d10, e no arremesso eles nasceriam sobrepostos.
+ */
+function scaleToRadius(p: Polyhedron, radius = 1): Polyhedron {
+  const max = Math.max(...p.vertices.map((v) => Math.hypot(v[0], v[1], v[2])));
+  const k = radius / max;
+  return {
+    ...p,
+    vertices: p.vertices.map((v) => [v[0] * k, v[1] * k, v[2] * k] as Vec3),
+  };
+}
+
 export const POLYHEDRA: Record<string, Polyhedron> = {
-  d4: orient(tetrahedron),
-  d6: orient(cube),
-  d8: orient(octahedron),
-  d10: orient(pentagonalTrapezohedron()),
-  d20: orient(icosahedron()),
+  d4: scaleToRadius(orient(tetrahedron)),
+  d6: scaleToRadius(orient(cube)),
+  d8: scaleToRadius(orient(octahedron)),
+  d10: scaleToRadius(orient(pentagonalTrapezohedron())),
+  d20: scaleToRadius(orient(icosahedron())),
 };
 
 export interface ValidationIssue {

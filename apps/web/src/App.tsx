@@ -1,3 +1,4 @@
+import { percentileDice, type DieSpec } from '@paradoxo/dice-3d';
 import {
   PARADOXO_EPIFANICO_V1 as RULESET,
   rollAction,
@@ -5,6 +6,7 @@ import {
   type RollResult,
 } from '@paradoxo/rules';
 import { useCallback, useEffect, useRef, useState } from 'react';
+import DiceCanvas, { type DiceCanvasHandle } from './DiceCanvas';
 
 type Tab = 'acao' | 'dano';
 
@@ -28,6 +30,17 @@ function loadHistory(): HistoryEntry[] {
   }
 }
 
+/** Dano usa os sólidos que existem; os demais viram par de d10. */
+function damageDice(sides: number, quantity: number, values: number[]): DieSpec[] {
+  const solid = [4, 6, 8, 10, 20];
+  if (solid.includes(sides)) {
+    return values.map((v) => ({ id: `d${sides}`, value: v }));
+  }
+  // d2 e d3 rolam num d6 rotulado; o resto usa o par percentual.
+  if (sides === 2 || sides === 3) return values.map((v) => ({ id: 'd6', value: v }));
+  return values.flatMap((v) => percentileDice(Math.min(100, Math.max(1, v))));
+}
+
 export default function App() {
   const [tab, setTab] = useState<Tab>('acao');
   const [skill, setSkill] = useState('');
@@ -36,13 +49,15 @@ export default function App() {
   const [result, setResult] = useState<RollResult | null>(null);
   const [label, setLabel] = useState<string | null>(null);
   const [outcome, setOutcome] = useState<string | null>(null);
+  const [rolling, setRolling] = useState(false);
+  const [showResult, setShowResult] = useState(false);
   const [history, setHistory] = useState<HistoryEntry[]>(loadHistory);
-  const [nonce, setNonce] = useState(0);
 
-  // O updater precisa ser PURO: o StrictMode o executa duas vezes em dev, e
-  // gravar no localStorage lá dentro duplicava entradas. A persistência mora
-  // num efeito, e o id vem de um contador — Date.now() colide em cliques rápidos.
-  const nextId = useRef(0);
+  const diceRef = useRef<DiceCanvasHandle>(null);
+
+  // Continua a numeração do histórico carregado. Reiniciando em 0, as entradas
+  // novas colidiam com as antigas e o React reclamava de keys duplicadas.
+  const nextId = useRef(history.reduce((max, h) => Math.max(max, h.id), 0));
 
   useEffect(() => {
     try {
@@ -57,7 +72,20 @@ export default function App() {
     setHistory((prev) => [{ ...entry, id }, ...prev].slice(0, 40));
   }, []);
 
-  function doAction() {
+  const animate = useCallback(async (dice: DieSpec[]) => {
+    setRolling(true);
+    setShowResult(false);
+    try {
+      await diceRef.current?.roll(dice);
+    } catch {
+      /* se a física falhar, o número já está na tela de qualquer forma */
+    }
+    setShowResult(true);
+    setRolling(false);
+  }, []);
+
+  async function doAction() {
+    if (rolling) return;
     const parsed = skill.trim() === '' ? null : Number.parseInt(skill, 10);
     const value = parsed !== null && Number.isInteger(parsed) ? parsed : null;
 
@@ -65,8 +93,6 @@ export default function App() {
     setResult(r);
     setLabel(r.label);
     setOutcome(r.outcome);
-    setNonce((n) => n + 1);
-
     push({
       total: r.total,
       detail: `${r.dice[0]!.value} + ${r.dice[1]!.value}`,
@@ -74,15 +100,15 @@ export default function App() {
       outcome: r.outcome,
       label: r.label,
     });
+    await animate(percentileDice(r.total));
   }
 
-  function doDamage() {
+  async function doDamage() {
+    if (rolling) return;
     const r = rollDamage(RULESET, { sides, quantity });
     setResult(r);
     setLabel(null);
     setOutcome(null);
-    setNonce((n) => n + 1);
-
     push({
       total: r.total,
       detail: r.dice.map((d) => d.value).join(' + '),
@@ -90,13 +116,22 @@ export default function App() {
       outcome: null,
       label: null,
     });
+    await animate(
+      damageDice(
+        sides,
+        quantity,
+        r.dice.map((d) => d.value),
+      ),
+    );
   }
 
-  function clearHistory() {
-    setHistory([]); // o efeito acima grava a lista vazia
-  }
+  // Ponte para verificação automatizada da interface.
+  useEffect(() => {
+    (window as unknown as { __dice?: unknown }).__dice = diceRef.current;
+  });
 
   const outcomeClass = outcome ? `o-${outcome}` : '';
+  const isAction = result?.kind === 'action';
 
   return (
     <>
@@ -107,6 +142,29 @@ export default function App() {
           Paradoxo Epifânico
           <span className="brand__ver">Prévia</span>
         </header>
+
+        <section className="stage">
+          <DiceCanvas ref={diceRef} />
+          <div className="stage__hud" aria-live="polite">
+            {showResult && result ? (
+              <div className="reveal">
+                <p className="hud__calc">
+                  {isAction
+                    ? `${result.dice[0]!.value} + ${result.dice[1]!.value} =`
+                    : result.dice.length > 1
+                      ? `${result.dice.map((d) => d.value).join(' + ')} =`
+                      : ''}
+                </p>
+                <p className={`hud__total ${outcomeClass}`}>{result.total}</p>
+                {label ? <p className={`hud__label ${outcomeClass}`}>{label}</p> : null}
+              </div>
+            ) : rolling ? (
+              <p className="hud__hint">toque para pular</p>
+            ) : (
+              <p className="hud__hint">role os dados</p>
+            )}
+          </div>
+        </section>
 
         <div className="tabs" role="tablist" aria-label="Tipo de rolagem">
           <button
@@ -150,8 +208,8 @@ export default function App() {
                   Com perícia, o resultado é interpretado. Sem perícia, mostra só o número.
                 </p>
               </div>
-              <button className="btn" type="button" onClick={doAction}>
-                Rolar d100
+              <button className="btn" type="button" onClick={doAction} disabled={rolling}>
+                {rolling ? 'Rolando…' : 'Rolar d100'}
               </button>
             </>
           ) : (
@@ -166,9 +224,11 @@ export default function App() {
                     type="number"
                     inputMode="numeric"
                     min={1}
-                    max={100}
+                    max={20}
                     value={quantity}
-                    onChange={(e) => setQuantity(Math.max(1, Number(e.target.value) || 1))}
+                    onChange={(e) =>
+                      setQuantity(Math.min(20, Math.max(1, Number(e.target.value) || 1)))
+                    }
                   />
                 </div>
                 <div className="field">
@@ -188,34 +248,18 @@ export default function App() {
                   </select>
                 </div>
               </div>
-              <button className="btn" type="button" onClick={doDamage}>
-                Rolar dano
+              <button className="btn" type="button" onClick={doDamage} disabled={rolling}>
+                {rolling ? 'Rolando…' : 'Rolar dano'}
               </button>
             </>
           )}
-
-          <div className="result" aria-live="polite">
-            {result ? (
-              <div key={nonce} className="reveal">
-                <p className="result__dice">
-                  {result.kind === 'action'
-                    ? `${result.dice[0]!.value} + ${result.dice[1]!.value}`
-                    : result.dice.map((d) => d.value).join(' + ')}
-                </p>
-                <p className={`result__total ${outcomeClass}`}>{result.total}</p>
-                {label ? <p className={`result__label ${outcomeClass}`}>{label}</p> : null}
-              </div>
-            ) : (
-              <p className="result__empty">Aguardando rolagem</p>
-            )}
-          </div>
         </section>
 
         {history.length > 0 ? (
           <section className="panel history">
             <div className="history__head">
               <span className="history__title">Histórico</span>
-              <button className="linkbtn" type="button" onClick={clearHistory}>
+              <button className="linkbtn" type="button" onClick={() => setHistory([])}>
                 Limpar
               </button>
             </div>
@@ -232,11 +276,6 @@ export default function App() {
             </ul>
           </section>
         ) : null}
-
-        <p className="note">
-          Prévia técnica. A rolagem 3D, as contas e a ficha ainda não estão aqui — o histórico
-          é local e some se você limpar o navegador.
-        </p>
       </main>
     </>
   );
