@@ -17,6 +17,9 @@ importers:
 
   apps/web:
     dependencies:
+      '@paradoxo/dice-3d':
+        specifier: workspace:*
+        version: link:../../packages/dice-3d
       '@paradoxo/rules':
         specifier: workspace:*
         version: link:../../packages/rules

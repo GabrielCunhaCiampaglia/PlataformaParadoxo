@@ -13,7 +13,8 @@
   "dependencies": {
     "@paradoxo/rules": "workspace:*",
     "react": "^19.2.0",
-    "react-dom": "^19.2.0"
+    "react-dom": "^19.2.0",
+    "@paradoxo/dice-3d": "workspace:*"
   },
   "devDependencies": {
     "@types/node": "^26.2.0",
