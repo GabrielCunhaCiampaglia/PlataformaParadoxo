@@ -30,6 +30,8 @@ type DiceUniforms = {
   uFlash: { value: number };
   /** Lado do atlas em células — o shader precisa dele para achar o centro da célula. */
   uCols: { value: number };
+  /** Índice da face que assentou. As outras têm o número atenuado. */
+  uTopFace: { value: number };
   uNumberMap: { value: THREE.Texture | null };
 };
 
@@ -98,6 +100,10 @@ export class DiceRenderer {
   private disposed = false;
   private trayHalf = 3.2;
   private floor?: THREE.Mesh;
+  /** Resolve a animação em voo quando `skip()` encerra por fora. */
+  private abortAnimation: (() => void) | null = null;
+  /** O jogador pulou esta rolagem: nada mais deve animar. */
+  private skipped = false;
 
   /** Diagnóstico da última rolagem — usado pelos testes de interface. */
   lastDiagnostics: RendererDiagnostics | null = null;
@@ -223,7 +229,11 @@ export class DiceRenderer {
 
     // O piso é INDEPENDENTE do tray físico: afastar a câmera é de graça,
     // aumentar o tray custa passos de simulação.
-    this.frameRadius = Math.max(spread + dieRadius * 2.2, 2.8);
+    // O piso mandava em toda rolagem de um dado só, e deixava o dado ocupando
+    // uns 17% da largura — pequeno demais para ler o número, ainda mais no d4,
+    // onde ele é menor que a face. Em 2,15 quem manda passa a ser o tamanho do
+    // próprio dado, que é o que deveria mandar.
+    this.frameRadius = Math.max(spread + dieRadius * 2.2, 2.15);
     this.applyCamera();
   }
 
@@ -282,6 +292,7 @@ export class DiceRenderer {
       uReveal: { value: 0 },
       uFlash: { value: 0 },
       uCols: { value: 1 },
+      uTopFace: { value: -1 },
       uNumberMap: { value: null as THREE.Texture | null },
     };
     (mat as MaterialWithUniforms).userData.diceUniforms = uniforms;
@@ -300,6 +311,7 @@ export class DiceRenderer {
       shader.uniforms.uReveal = uniforms.uReveal;
       shader.uniforms.uFlash = uniforms.uFlash;
       shader.uniforms.uCols = uniforms.uCols;
+      shader.uniforms.uTopFace = uniforms.uTopFace;
       shader.uniforms.uNumberMap = uniforms.uNumberMap;
       shader.fragmentShader = shader.fragmentShader
         .replace(
@@ -308,18 +320,31 @@ export class DiceRenderer {
            uniform float uReveal;
            uniform float uFlash;
            uniform float uCols;
+           uniform float uTopFace;
            uniform sampler2D uNumberMap;`,
         )
         .replace(
           '#include <emissivemap_fragment>',
           `#include <emissivemap_fragment>
-           vec2 cellCenter = (floor(vUv * uCols) + 0.5) / uCols;
+           vec2 cellIdx = floor(vUv * uCols);
+           vec2 cellCenter = (cellIdx + 0.5) / uCols;
            float grow = mix(0.72, 1.0, uReveal);
            vec2 numUv = cellCenter + (vUv - cellCenter) * grow;
            vec4 numTex = texture2D(uNumberMap, numUv);
-           float a = numTex.a * uReveal;
+
+           // Qual face é esta célula. A linha é invertida porque a textura tem
+           // flipY — a mesma inversão que a UV faz em geometry.ts.
+           float faceIdx = (uCols - 1.0 - cellIdx.y) * uCols + cellIdx.x;
+           // uTopFace < 0 significa "não atenue nada": é o caso do d4, cujo
+           // destaque já vem resolvido no atlas, canto a canto.
+           float isTop = max(step(uTopFace, -0.5), step(abs(faceIdx - uTopFace), 0.5));
+
+           // As outras faces ficam com o número fantasma. Um dado real também
+           // tem número nos lados, mas eles não competem com o de cima; aqui
+           // competiam, e não dava para saber qual era o resultado.
+           float a = numTex.a * uReveal * mix(0.26, 1.0, isTop);
            diffuseColor.rgb = mix(diffuseColor.rgb, numTex.rgb, a);
-           totalEmissiveRadiance += numTex.rgb * a * (0.35 + uFlash * 2.4);`,
+           totalEmissiveRadiance += numTex.rgb * a * isTop * (0.35 + uFlash * 2.4);`,
         );
     };
     // Sem customProgramCacheKey: o three.js chama onBeforeCompile ANTES de
@@ -360,6 +385,7 @@ export class DiceRenderer {
     this.clearDice();
 
     // --- 1. física headless, descartando simulações degeneradas ---
+    this.skipped = false;
     const t0 = performance.now();
     const ids = dice.map((d) => d.id);
     let sim = simulate({ dice: ids, seed, record: true, viewDir: VIEW_DIR });
@@ -380,19 +406,25 @@ export class DiceRenderer {
     for (let i = 0; i < dice.length; i++) {
       const spec = dice[i]!;
       const poly = POLYHEDRA[spec.id]!;
-      const { geometry, cols, aspect } = buildDiceGeometry(poly);
+      const { geometry, cols, aspect, corners } = buildDiceGeometry(poly);
+
+      // No d4, `topFaces[i]` é o VÉRTICE do topo, não uma face — a simulação já
+      // devolve assim, porque um tetraedro apoiado numa face não tem face para
+      // cima. Os rótulos passam a ser por vértice; a contagem é a mesma (4 e 4),
+      // então a permutação de `labelFaces` continua valendo.
+      const isD4 = spec.id === 'd4';
       const labels = labelFaces({
         dieId: spec.id,
         topFaceIndex: sim.topFaces[i]!,
         targetValue: spec.value,
         ...(spec.role ? { role: spec.role } : {}),
       });
-      // Só a face que assentou recebe número. Ver texture.ts / doc 08 §3.2.
       const atlas = buildNumberAtlas({
         labels,
         cols,
         aspect,
-        ...(numberOnlyTopFace ? { onlyFace: sim.topFaces[i]! } : {}),
+        ...(isD4 ? { corners, vertexLabels: labels, topVertex: sim.topFaces[i]! } : {}),
+        ...(numberOnlyTopFace && !isD4 ? { onlyFace: sim.topFaces[i]! } : {}),
       });
 
       const material = this.makeMaterial();
@@ -403,6 +435,9 @@ export class DiceRenderer {
 
       this.setUniform(material, 'uNumberMap', atlas);
       this.setUniform(material, 'uCols', cols);
+      // −1 desliga a atenuação no shader: no d4 o destaque do canto do topo já
+      // está pintado no atlas, e atenuar de novo apagaria o resultado junto.
+      this.setUniform(material, 'uTopFace', isD4 ? -1 : sim.topFaces[i]!);
       this.setUniform(material, 'uReveal', 0);
       this.setUniform(material, 'uFlash', 0);
 
@@ -472,8 +507,17 @@ export class DiceRenderer {
         if (done) return;
         done = true;
         clearTimeout(timer);
+        if (this.abortAnimation === abort) this.abortAnimation = null;
         resolve(v);
       };
+      // Como `skip()` encerra a animação por fora, ele precisa de um jeito de
+      // resolver a Promise que está em voo. Sem isto, cancelar o rAF só fazia o
+      // tick parar de rodar: `finish` nunca era chamado e a rolagem só destravava
+      // quando o watchdog estourava, segundos depois. É o "pulei e ficou
+      // esperando" — o resultado já estava na tela e a interface seguia presa.
+      const abort = () => finish(onTimeout());
+      this.abortAnimation = abort;
+
       const timer = setTimeout(() => {
         if (done) return;
         this.skipToRest();
@@ -496,7 +540,7 @@ export class DiceRenderer {
     const expectedMs = (total * STEP_MS) / speed;
 
     // Já em segundo plano: nem começa a animar, vai direto ao repouso.
-    if (typeof document !== 'undefined' && document.hidden) {
+    if (this.skipped || (typeof document !== 'undefined' && document.hidden)) {
       this.skipToRest();
       return Promise.resolve(0);
     }
@@ -536,7 +580,7 @@ export class DiceRenderer {
       }
     };
 
-    if (typeof document !== 'undefined' && document.hidden) {
+    if (this.skipped || (typeof document !== 'undefined' && document.hidden)) {
       done();
       return Promise.resolve();
     }
@@ -709,12 +753,18 @@ export class DiceRenderer {
 
   /** Mostra o resultado na hora, sem animação. */
   skip(): void {
+    // Marca ANTES de resolver: `roll` segue para a revelação assim que a
+    // reprodução termina, e sem a marca ela começaria a animar de novo — pular
+    // a queda só para ver o número entrar em fade não é pular.
+    this.skipped = true;
     cancelAnimationFrame(this.raf);
     for (const d of this.dice) {
       readTrack(d.track, d.track.steps - 1, d.mesh.position, d.mesh.quaternion);
       this.setUniform(d.material, 'uReveal', 1);
+      this.setUniform(d.material, 'uFlash', 0);
     }
     this.renderOnce();
+    this.abortAnimation?.();
   }
 
   dispose(): void {

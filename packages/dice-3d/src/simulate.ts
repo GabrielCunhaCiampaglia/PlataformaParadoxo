@@ -77,6 +77,9 @@ export function mulberry32(seed: number): () => number {
 const TRAY_WALL_H = 5;
 const STEP = 1 / 60;
 const REST_FRAMES = 6;
+
+/** Quantas vezes um dado ilegível pode ser empurrado antes de a rolagem ser descartada. */
+const MAX_NUDGES = 4;
 const REST_LINEAR = 0.19;
 const REST_ANGULAR = 0.26;
 
@@ -167,27 +170,111 @@ export function topFaceOf(
 }
 
 /**
- * O dado assentou de verdade, ou ficou escorado?
- *
- * Um poliedro em repouso sobre uma face tem a normal DESSA face apontando para
- * baixo. Equilibrado numa aresta ou num vértice, nenhuma normal chega perto de
- * −1. O limiar é por sólido porque o d10 é um trapezoedro: ele apoia num kite
- * inclinado e não passa de cerca de −0,73 nem quando está perfeitamente estável.
+ * Vértices em espaço local, cacheados. Usados só pelo d4.
  */
-function isSettled(dieId: string, q: CANNON.Quaternion): boolean {
-  const normals = normalsFor(dieId);
-  const v = new CANNON.Vec3();
-  let lowest = 1;
-  for (const n of normals) {
-    v.set(n[0], n[1], n[2]);
-    q.vmult(v, v);
-    if (v.y < lowest) lowest = v.y;
+const vertexCache = new Map<string, [number, number, number][]>();
+function verticesFor(id: string): [number, number, number][] {
+  let v = vertexCache.get(id);
+  if (!v) {
+    v = POLYHEDRA[id]!.vertices.map((p) => [...p] as [number, number, number]);
+    vertexCache.set(id, v);
   }
-  return lowest <= (dieId === 'd10' ? -0.5 : -0.7);
+  return v;
+}
+
+/**
+ * Qual VÉRTICE o observador está lendo. Só faz sentido para o d4.
+ *
+ * Um tetraedro apoiado numa face não tem face para cima: as três de cima ficam
+ * a 70° da vertical, e a normal da melhor delas mal chega a 0,5 contra a
+ * direção da câmera — medido, não estimado. Por isso um d4 de verdade traz o
+ * número nos CANTOS, e o resultado é o que está no vértice do topo. É esse
+ * vértice que esta função devolve.
+ */
+export function topVertexOf(
+  dieId: string,
+  q: CANNON.Quaternion,
+  viewDir: readonly [number, number, number] = [0, 1, 0],
+): number {
+  const v = new CANNON.Vec3();
+  const len = Math.hypot(viewDir[0], viewDir[1], viewDir[2]) || 1;
+  let best = -Infinity;
+  let bestIndex = 0;
+  const verts = verticesFor(dieId);
+  for (let i = 0; i < verts.length; i++) {
+    const p = verts[i]!;
+    v.set(p[0], p[1], p[2]);
+    q.vmult(v, v);
+    const score = (v.x * viewDir[0] + v.y * viewDir[1] + v.z * viewDir[2]) / len;
+    if (score > best) {
+      best = score;
+      bestIndex = i;
+    }
+  }
+  return bestIndex;
+}
+
+/** Maior e segundo maior produto escalar de uma lista de direções contra a vista. */
+function topTwo(
+  dirs: [number, number, number][],
+  q: CANNON.Quaternion,
+  viewDir: readonly [number, number, number],
+): { best: number; margin: number; lowestY: number } {
+  const v = new CANNON.Vec3();
+  const len = Math.hypot(viewDir[0], viewDir[1], viewDir[2]) || 1;
+  let best = -Infinity;
+  let second = -Infinity;
+  let lowestY = 1;
+  for (const d of dirs) {
+    v.set(d[0], d[1], d[2]);
+    q.vmult(v, v);
+    if (v.y < lowestY) lowestY = v.y;
+    const s = (v.x * viewDir[0] + v.y * viewDir[1] + v.z * viewDir[2]) / len;
+    if (s > best) {
+      second = best;
+      best = s;
+    } else if (s > second) {
+      second = s;
+    }
+  }
+  return { best, margin: best - second, lowestY };
+}
+
+/**
+ * O jogador consegue LER este dado?
+ *
+ * O critério antigo perguntava se o dado tinha assentado, medindo se alguma
+ * normal apontava para baixo. Era a pergunta errada, e o limiar de −0,7 ainda
+ * por cima deixava passar o caso exato que ele deveria pegar: um cubo apoiado
+ * numa ARESTA tem a normal mais baixa em −cos 45° = −0,707. Cerca de 5% das
+ * rolagens de d6 saíam deitadas na aresta, com dois números meio virados para a
+ * câmera e nenhum deles claramente o resultado.
+ *
+ * A pergunta certa é sobre a leitura: a face que vai receber o número precisa
+ * estar de frente para a câmera E precisa estar sozinha nisso. Medido em 300
+ * rolagens por sólido, um dado assentado dá `best` ≈ 0,977; os limiares abaixo
+ * ficam bem acima do ruído e bem abaixo do repouso legítimo.
+ *
+ * O d4 é exceção e não tem conserto por limiar: ele nunca passa de ~0,5 porque
+ * não existe face para cima num tetraedro. Nele o que se exige é apoio plano e
+ * um vértice de topo inequívoco — o número é lido no canto. Ver `topVertexOf`.
+ */
+function isReadable(
+  dieId: string,
+  q: CANNON.Quaternion,
+  viewDir: readonly [number, number, number],
+): boolean {
+  if (dieId === 'd4') {
+    const flat = topTwo(normalsFor(dieId), q, viewDir).lowestY <= -0.95;
+    return flat && topTwo(verticesFor(dieId), q, viewDir).margin >= 0.25;
+  }
+  const { best, margin } = topTwo(normalsFor(dieId), q, viewDir);
+  return best >= 0.93 && margin >= 0.1;
 }
 
 export function simulate(opts: SimOptions): SimResult {
-  const { dice, seed, maxSteps = 300, record = false, viewDir } = opts;
+  // 300 passos bastam para assentar; a folga acima disso é para as cutucadas.
+  const { dice, seed, maxSteps = 620, record = false, viewDir } = opts;
   const rng = mulberry32(seed);
   const t0 = performance.now();
 
@@ -302,11 +389,26 @@ export function simulate(opts: SimOptions): SimResult {
       bodies.push(body);
     }
 
-    // Buffer por dado, dimensionado pelo teto de passos e cortado no fim.
-    const tracks: Float32Array[] = record
-      ? dice.map(() => new Float32Array(maxSteps * 7))
-      : [];
+    // Buffer por dado, cortado no fim.
+    //
+    // Dimensionado pelo caso COMUM, não pelo teto. Uma rolagem assenta em ~120
+    // passos; o teto de `maxSteps` só é alcançado quando há cutucada, que é
+    // rara. Alocar o teto sempre custava caro onde mais dói — em 10 dados a
+    // mediana subiu de 150 ms para 205 ms só de zerar buffer que ninguém usa.
+    // O buffer cresce na primeira cutucada e só nela.
+    let capacity = Math.min(maxSteps, 300);
+    let tracks: Float32Array[] = record ? dice.map(() => new Float32Array(capacity * 7)) : [];
+    const growTracks = () => {
+      if (!record || capacity >= maxSteps) return;
+      capacity = maxSteps;
+      tracks = tracks.map((old) => {
+        const bigger = new Float32Array(capacity * 7);
+        bigger.set(old);
+        return bigger;
+      });
+    };
     let restStreak = 0;
+    let nudges = 0;
     let steps = 0;
 
     for (; steps < maxSteps; steps++) {
@@ -336,8 +438,36 @@ export function simulate(opts: SimOptions): SimResult {
       );
       restStreak = settled ? restStreak + 1 : 0;
       if (restStreak >= REST_FRAMES) {
-        steps++;
-        break;
+        // Dado escorado se CUTUCA, não se re-rola.
+        //
+        // Exigir que todo dado seja legível é a regra certa, mas rejeitar a
+        // rolagem inteira por causa de um dado sai caro: com 10 dados a chance
+        // de todos saírem bons de primeira é baixa, e a rolagem passou a custar
+        // 449 ms contra 150 ms, com 16% delas esgotando as tentativas.
+        //
+        // Numa mesa de verdade ninguém re-rola tudo quando um dado fica de pé
+        // contra o livro: empurra-se aquele dado. É o que acontece aqui, com o
+        // impulso vindo do mesmo rng semeado, então a simulação segue
+        // reprodutível. E como a cutucada entra na gravação, o jogador vê o
+        // dado ser empurrado — não há corte nem salto.
+        const view = viewDir ?? ([0, 1, 0] as const);
+        const stuck = bodies.filter((b, i) => !isReadable(dice[i]!, b.quaternion, view));
+        if (stuck.length === 0 || nudges >= MAX_NUDGES) {
+          steps++;
+          break;
+        }
+        nudges++;
+        growTracks();
+        for (const b of stuck) {
+          b.wakeUp();
+          b.velocity.set((rng() - 0.5) * 1.6, 2.4 + rng() * 0.8, (rng() - 0.5) * 1.6);
+          b.angularVelocity.set(
+            (rng() - 0.5) * 12,
+            (rng() - 0.5) * 12,
+            (rng() - 0.5) * 12,
+          );
+        }
+        restStreak = 0;
       }
     }
 
@@ -363,16 +493,26 @@ export function simulate(opts: SimOptions): SimResult {
       }
     }
 
-    // Dado escorado é gravação degenerada — mas SÓ vale checar com um dado.
+    // A checagem vale para TODOS os dados, não só quando há um.
     //
-    // Com vários, eles encostam uns nos outros e ficam inclinados por um motivo
-    // legítimo: é o que acontece numa mesa de verdade. Aplicar o filtro ali
-    // rejeitava 17% das rolagens de 10 dados sem que houvesse defeito nenhum.
-    if (dice.length === 1 && !isSettled(dice[0]!, bodies[0]!.quaternion)) {
-      return { ok: false, degeneracy: 'no-rest', steps, cpuMs, frames, topFaces: [] };
+    // A versão anterior só checava rolagem de um dado, com o argumento de que
+    // vários dados se escoram por um motivo legítimo. O argumento vale para a
+    // pose, não para a leitura: um dado escorado com dois números meio virados
+    // para a câmera é ilegível esteja ele sozinho ou acompanhado, e o jogador
+    // não tem como saber qual é o resultado.
+    const view = viewDir ?? ([0, 1, 0] as const);
+    for (let i = 0; i < bodies.length; i++) {
+      if (!isReadable(dice[i]!, bodies[i]!.quaternion, view)) {
+        return { ok: false, degeneracy: 'no-rest', steps, cpuMs, frames, topFaces: [] };
+      }
     }
 
-    const topFaces = bodies.map((b, i) => topFaceOf(dice[i]!, b.quaternion, viewDir));
+    // O d4 é lido no vértice do topo, não numa face. Ver `topVertexOf`.
+    const topFaces = bodies.map((b, i) =>
+      dice[i] === 'd4'
+        ? topVertexOf('d4', b.quaternion, viewDir)
+        : topFaceOf(dice[i]!, b.quaternion, viewDir),
+    );
     return { ok: true, steps, cpuMs, frames, topFaces };
   } catch {
     return {

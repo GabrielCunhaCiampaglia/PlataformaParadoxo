@@ -7,7 +7,8 @@ import {
   readTopValue,
   splitPercentile,
 } from '../src/label.js';
-import { POLYHEDRA, validate } from '../src/polyhedra.js';
+import * as CANNON from 'cannon-es';
+import { POLYHEDRA, faceNormal, validate } from '../src/polyhedra.js';
 import { mulberry32, simulate } from '../src/simulate.js';
 
 describe('Geometrias — requisitos do cannon-es', () => {
@@ -150,7 +151,79 @@ describe('Teste de fogo — leitura visual bate com o motor', () => {
       expect(r.read).toBe(r.expected);
       checked++;
     }
-    expect(checked).toBeGreaterThan(290);
+    // O que importa é o `toBe` acima: nenhuma leitura pode divergir do motor.
+    //
+    // Este piso só garante que a amostra é grande. Ele desceu de 290 quando o
+    // portão de aceitação passou a exigir LEGIBILIDADE e não só repouso — uma
+    // simulação a mais é descartada aqui e ali, e o renderer simplesmente tenta
+    // de novo. Uma queda brusca daqui, porém, é sinal de que o portão apertou
+    // demais e vale investigar.
+    expect(checked).toBeGreaterThan(280);
+  });
+});
+
+/**
+ * TODOS os sólidos, não só o d10 do teste de fogo.
+ *
+ * O d6 saía deitado na aresta em cerca de 5% das rolagens e ninguém percebia,
+ * porque a única cobertura de assentamento era sobre o par de d10 do percentual.
+ */
+describe('Legibilidade — sólido por sólido', () => {
+  const VIEW = [0, 0.978, 0.208] as const;
+
+  function readAngle(dieId: string, q: CANNON.Quaternion): number {
+    const p = POLYHEDRA[dieId]!;
+    const v = new CANNON.Vec3();
+    const len = Math.hypot(VIEW[0], VIEW[1], VIEW[2]);
+    // No d4 o resultado é lido num VÉRTICE; nos demais, numa face.
+    const dirs =
+      dieId === 'd4'
+        ? p.vertices.map((x) => [...x] as [number, number, number])
+        : p.faces.map((_, i) => [...faceNormal(p, i)] as [number, number, number]);
+
+    let best = -Infinity;
+    for (const d of dirs) {
+      v.set(d[0], d[1], d[2]);
+      q.vmult(v, v);
+      best = Math.max(best, (v.x * VIEW[0] + v.y * VIEW[1] + v.z * VIEW[2]) / len);
+    }
+    return best;
+  }
+
+  for (const id of ['d4', 'd6', 'd8', 'd10', 'd20']) {
+    it(`${id}: toda rolagem aceita assenta de frente para a câmera`, () => {
+      let accepted = 0;
+      for (let i = 0; i < 150; i++) {
+        const sim = simulate({ dice: [id], seed: 610_000 + i, viewDir: VIEW, record: true });
+        if (!sim.ok) continue;
+        accepted++;
+
+        const t = sim.frames[0]!;
+        const o = (t.steps - 1) * 7;
+        const q = new CANNON.Quaternion(
+          t.data[o + 3]!,
+          t.data[o + 4]!,
+          t.data[o + 5]!,
+          t.data[o + 6]!,
+        );
+
+        // 0,9 fica bem acima do cubo apoiado na aresta, que dá 0,707 — o caso
+        // exato que o limiar antigo de −0,7 deixava passar.
+        expect(readAngle(id, q), `${id} semente ${610_000 + i} saiu ilegível`).toBeGreaterThan(0.9);
+      }
+      // A cutucada in-loop deve deixar a rejeição rara em rolagem de um dado.
+      expect(accepted, `${id} rejeitou demais`).toBeGreaterThan(135);
+    }, 60_000);
+  }
+
+  it('o d4 é lido no vértice do topo, e todo valor cabe nos 4 vértices', () => {
+    // labelFaces é reaproveitado por vértice: são 4 vértices e 4 valores.
+    for (let target = 1; target <= 4; target++) {
+      const labels = labelFaces({ dieId: 'd4', topFaceIndex: 2, targetValue: target });
+      expect(labels).toHaveLength(4);
+      expect(readTopValue(labels, 2)).toBe(target);
+      expect([...labels].sort()).toEqual([1, 2, 3, 4]);
+    }
   });
 });
 

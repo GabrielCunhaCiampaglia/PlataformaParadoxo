@@ -68,6 +68,17 @@ export interface DiceGeometryResult {
    * então um valor por dado basta.
    */
   aspect: number;
+  /**
+   * Onde caem os CANTOS de cada face dentro da própria célula do atlas, e a
+   * qual vértice do sólido cada canto pertence. `corners[f][k]` é o canto `k`
+   * da face `f`, em coordenadas de célula (0..1, com `v` crescendo para cima).
+   *
+   * É o que permite numerar o d4 como um d4 de verdade: como um tetraedro
+   * apoiado numa face não tem face para cima, o número vai nos cantos e o
+   * resultado é o que está no vértice do topo. Os três cantos que compartilham
+   * esse vértice mostram o mesmo número, em qualquer face que se olhe.
+   */
+  corners: Array<Array<{ vertex: number; u: number; v: number }>>;
 }
 
 /**
@@ -79,6 +90,7 @@ export function buildDiceGeometry(p: Polyhedron, inset = 0.92): DiceGeometryResu
   const cell = 1 / cols;
 
   let aspect = 1;
+  const corners: DiceGeometryResult['corners'] = [];
 
   const positions: number[] = [];
   const normals: number[] = [];
@@ -127,7 +139,9 @@ export function buildDiceGeometry(p: Polyhedron, inset = 0.92): DiceGeometryResu
     const cx = (f % cols) * cell;
     const cy = (cols - 1 - Math.floor(f / cols)) * cell;
 
-    const faceUVs = projected.map((q) => {
+    const cellCorners: Array<{ vertex: number; u: number; v: number }> = [];
+
+    const faceUVs = projected.map((q, k) => {
       const nx = (q.x / halfX) * 0.5 * inset + 0.5;
       // Dentro da célula, V CRESCE com o "para cima" da face.
       //
@@ -136,8 +150,10 @@ export function buildDiceGeometry(p: Polyhedron, inset = 0.92): DiceGeometryResu
       // relação é direta. A inversão necessária é só a da LINHA da célula,
       // acima — inverter aqui também deixava o número de cabeça para baixo.
       const ny = 0.5 + (q.y / halfY) * 0.5 * inset;
+      cellCorners.push({ vertex: face[k]!, u: nx, v: ny });
       return new THREE.Vector2(cx + nx * cell, cy + ny * cell);
     });
+    corners.push(cellCorners);
 
     // Triangula em leque. Faces convexas — sempre válido.
     for (let i = 1; i < face.length - 1; i++) {
@@ -157,7 +173,7 @@ export function buildDiceGeometry(p: Polyhedron, inset = 0.92): DiceGeometryResu
   geometry.setAttribute('uv', new THREE.Float32BufferAttribute(uvs, 2));
   geometry.computeBoundingSphere();
 
-  return { geometry, cols, aspect };
+  return { geometry, cols, aspect, corners };
 }
 
 /** Raio da esfera que contém o sólido — usado para enquadrar a câmera. */

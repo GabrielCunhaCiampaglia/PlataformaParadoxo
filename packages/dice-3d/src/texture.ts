@@ -33,6 +33,22 @@ export interface AtlasOptions {
    * o que está na tela é o resultado, sem ambiguidade.
    */
   onlyFace?: number;
+  /**
+   * Numeração POR VÉRTICE, como num d4 de verdade.
+   *
+   * Um tetraedro apoiado numa face não tem face para cima — o que aponta para
+   * cima é um vértice, e a melhor face fica a uns 60° da câmera. Por isso um d4
+   * real traz três números por face, um em cada canto, e o resultado é o que
+   * está no canto do topo: as três faces visíveis mostram o mesmo número ali.
+   *
+   * Passando `corners` (de `buildDiceGeometry`) junto de `vertexLabels`, o
+   * atlas desenha nesse esquema em vez de um número centralizado por face.
+   */
+  corners?: Array<Array<{ vertex: number; u: number; v: number }>>;
+  /** `vertexLabels[v]` é o número do vértice `v`. */
+  vertexLabels?: number[];
+  /** Vértice que ficou para cima; os demais saem atenuados. */
+  topVertex?: number;
 }
 
 const AMBIGUOUS = new Set([6, 9, 66, 68, 86, 89, 98, 99]);
@@ -69,6 +85,9 @@ export function buildNumberAtlas(opts: AtlasOptions): THREE.CanvasTexture {
     aspect = 1,
     underlineAmbiguous = true,
     onlyFace,
+    corners,
+    vertexLabels,
+    topVertex,
   } = opts;
   const size = cols * cellSize;
 
@@ -85,6 +104,72 @@ export function buildNumberAtlas(opts: AtlasOptions): THREE.CanvasTexture {
   ctx.clearRect(0, 0, size, size);
   ctx.textAlign = 'center';
   ctx.textBaseline = 'middle';
+
+  // Desenha um dígito já posicionado, com o esticamento e o contraste padrão.
+  const digit = (text: string, fontSize: number, alpha: number) => {
+    ctx.font = `800 ${fontSize}px ${FAMILY}`;
+    ctx.globalAlpha = alpha;
+
+    // Sombra difusa em vez do contorno grosso de antes.
+    //
+    // O contorno tinha 14% do corpo da fonte e junta de canto arredondado: ele
+    // engordava o dígito até os vãos do 6 e do 8 quase fecharem, e era boa
+    // parte da impressão de fonte feia. A sombra dá o mesmo contraste sobre a
+    // parte clara do dado sem tocar no desenho da letra.
+    ctx.shadowColor = 'rgba(0,0,0,0.6)';
+    ctx.shadowBlur = fontSize * 0.16;
+    ctx.shadowOffsetY = fontSize * 0.04;
+    ctx.lineWidth = fontSize * 0.06;
+    ctx.lineJoin = 'round';
+    ctx.strokeStyle = 'rgba(0,0,0,0.5)';
+    ctx.strokeText(text, 0, 0);
+
+    ctx.shadowColor = 'transparent';
+    ctx.fillStyle = color;
+    ctx.fillText(text, 0, 0);
+    ctx.globalAlpha = 1;
+  };
+
+  if (corners && vertexLabels) {
+    for (let f = 0; f < corners.length; f++) {
+      if (onlyFace !== undefined && f !== onlyFace) continue;
+      const originX = (f % cols) * cellSize;
+      const originY = Math.floor(f / cols) * cellSize;
+
+      for (const c of corners[f]!) {
+        const value = vertexLabels[c.vertex];
+        if (value === undefined) continue;
+
+        const isTop = c.vertex === topVertex;
+
+        // Puxa o dígito do canto para dentro da face.
+        //
+        // Não é só para não sangrar pela aresta. Visto de cima, o vértice do
+        // topo de um tetraedro projeta num PONTO no meio da tela: os três
+        // dígitos do resultado, um por face visível, caíam todos ali e viravam
+        // um borrão. Recuando o do resultado mais que os outros, eles se abrem
+        // em três números separados em volta do ápice — e continuam sendo
+        // números de canto, como num d4 impresso.
+        const pull = isTop ? 0.26 : 0.78;
+        const pu = 0.5 + (c.u - 0.5) * pull;
+        const pv = 0.5 + (c.v - 0.5) * pull;
+
+        // O dígito aponta o topo PARA o canto, que é como um d4 é impresso: ele
+        // fica de pé para quem lê pelo vértice em que está. A direção é medida
+        // em espaço de face, não de célula — daí o `aspect` corrigindo o eixo U.
+        const angle = Math.atan2((c.u - 0.5) * aspect, c.v - 0.5);
+
+        ctx.save();
+        // `v` cresce para cima na célula e para baixo no canvas.
+        ctx.translate(originX + pu * cellSize, originY + (1 - pv) * cellSize);
+        ctx.scale(stretchX, 1);
+        ctx.rotate(angle);
+        digit(String(value), cellSize * (isTop ? 0.44 : 0.17), isTop ? 1 : 0.13);
+        ctx.restore();
+      }
+    }
+    return finish(canvas);
+  }
 
   for (let i = 0; i < labels.length; i++) {
     if (onlyFace !== undefined && i !== onlyFace) continue;
@@ -115,23 +200,7 @@ export function buildNumberAtlas(opts: AtlasOptions): THREE.CanvasTexture {
     ctx.translate(cx, cy);
     ctx.scale(stretchX, 1);
 
-    // Sombra difusa em vez do contorno grosso de antes.
-    //
-    // O contorno tinha 14% do corpo da fonte e junta de canto arredondado: ele
-    // engordava o dígito até os vãos do 6 e do 8 quase fecharem, e era boa
-    // parte da impressão de fonte feia. A sombra dá o mesmo contraste sobre a
-    // parte clara do dado sem tocar no desenho da letra.
-    ctx.shadowColor = 'rgba(0,0,0,0.6)';
-    ctx.shadowBlur = fontSize * 0.16;
-    ctx.shadowOffsetY = fontSize * 0.04;
-    ctx.lineWidth = fontSize * 0.06;
-    ctx.lineJoin = 'round';
-    ctx.strokeStyle = 'rgba(0,0,0,0.5)';
-    ctx.strokeText(text, 0, 0);
-
-    ctx.shadowColor = 'transparent';
-    ctx.fillStyle = color;
-    ctx.fillText(text, 0, 0);
+    digit(text, fontSize, 1);
 
     if (underlineAmbiguous && AMBIGUOUS.has(value)) {
       const w = ctx.measureText(text).width;
@@ -142,6 +211,10 @@ export function buildNumberAtlas(opts: AtlasOptions): THREE.CanvasTexture {
     ctx.restore();
   }
 
+  return finish(canvas);
+}
+
+function finish(canvas: HTMLCanvasElement): THREE.CanvasTexture {
   const texture = new THREE.CanvasTexture(canvas);
   texture.colorSpace = THREE.SRGBColorSpace;
   // Anisotropia 2: o dado é visto quase de frente, não em ângulo rasante.
