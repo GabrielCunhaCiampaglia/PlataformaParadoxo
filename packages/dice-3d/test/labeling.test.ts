@@ -171,13 +171,23 @@ describe('Simulação headless', () => {
     expect(seen.size).toBeGreaterThan(15);
   });
 
-  it('grava os frames quando pedido, para reprodução posterior', () => {
+  it('grava a trajetória quando pedido, para reprodução posterior', () => {
     const r = simulate({ dice: ['d6'], seed: 77, record: true });
     expect(r.ok).toBe(true);
-    expect(r.frames[0]!.length).toBe(r.steps);
-    const f = r.frames[0]![0]!;
-    expect(f.p).toHaveLength(3);
-    expect(f.q).toHaveLength(4);
+
+    const track = r.frames[0]!;
+    expect(track.steps).toBe(r.steps);
+    // 7 floats por passo: posição (3) + quaternion (4).
+    expect(track.data.length).toBe(r.steps * 7);
+    expect(track.data).toBeInstanceOf(Float32Array);
+
+    // O quaternion gravado precisa ser unitário, senão a rotação distorce a malha.
+    const q = track.data.subarray(3, 7);
+    expect(Math.hypot(q[0]!, q[1]!, q[2]!, q[3]!)).toBeCloseTo(1, 4);
+  });
+
+  it('não aloca gravação quando record está desligado', () => {
+    expect(simulate({ dice: ['d6'], seed: 77 }).frames).toEqual([]);
   });
 
   it('rejeita geometria desconhecida', () => {

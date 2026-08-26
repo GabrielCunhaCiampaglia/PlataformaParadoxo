@@ -12,9 +12,32 @@ import { POLYHEDRA, faceNormal, type Polyhedron } from './polyhedra.js';
 
 export type Degeneracy = 'no-rest' | 'out-of-tray' | 'below-floor' | 'exception';
 
-export interface DieFrame {
-  p: [number, number, number];
-  q: [number, number, number, number];
+/**
+ * Gravação de UM dado, empacotada em Float32Array.
+ *
+ * São 7 floats por passo — posição (3) e quaternion (4) — num único buffer
+ * contíguo. A versão anterior criava um objeto com dois arrays por dado por
+ * passo: numa rolagem de 10 dados com 270 passos isso são 2.700 objetos e 5.400
+ * arrays, e o custo de alocação e de GC dominava o tempo total no navegador
+ * (250-620 ms, contra 13-54 ms do mesmo código em Node sem gravação).
+ */
+export interface DieTrack {
+  /** `steps × 7` floats: x, y, z, qx, qy, qz, qw. */
+  data: Float32Array;
+  steps: number;
+}
+
+/** Lê um passo da gravação para dentro de objetos three.js, sem alocar. */
+export function readTrack(
+  track: DieTrack,
+  step: number,
+  outPos: { set(x: number, y: number, z: number): unknown },
+  outQuat: { set(x: number, y: number, z: number, w: number): unknown },
+): void {
+  const i = Math.min(Math.max(step, 0), track.steps - 1) * 7;
+  const d = track.data;
+  outPos.set(d[i]!, d[i + 1]!, d[i + 2]!);
+  outQuat.set(d[i + 3]!, d[i + 4]!, d[i + 5]!, d[i + 6]!);
 }
 
 export interface SimResult {
@@ -23,8 +46,8 @@ export interface SimResult {
   /** Passos de física até o repouso. */
   steps: number;
   cpuMs: number;
-  /** frames[dado][passo] */
-  frames: DieFrame[][];
+  /** Uma gravação por dado. */
+  frames: DieTrack[];
   /** Índice da face voltada para cima, por dado. */
   topFaces: number[];
 }
@@ -54,15 +77,19 @@ export function mulberry32(seed: number): () => number {
 const TRAY_WALL_H = 5;
 const STEP = 1 / 60;
 const REST_FRAMES = 6;
-const REST_LINEAR = 0.25;
-const REST_ANGULAR = 0.35;
+const REST_LINEAR = 0.19;
+const REST_ANGULAR = 0.26;
 
 /**
- * O tray cresce com a quantidade de dados. Ajustado para ser JUSTO: com folga
- * demais, dois dados viravam manchas de 4% da tela e o número ficava ilegível.
+ * O tray cresce com a quantidade de dados.
+ *
+ * Mantido JUSTO de propósito: cada unidade a mais de tray é distância que os
+ * dados percorrem e passos de física que a simulação paga. Inflar o tray para
+ * melhorar o enquadramento levou o custo de 12 ms para 88 ms numa rolagem de
+ * d100. O enquadramento é problema da CÂMERA, que afasta de graça.
  */
 export function trayHalfFor(count: number): number {
-  return Math.max(1.9, 1.15 * Math.sqrt(count) + 0.8);
+  return Math.max(2.2, 1.15 * Math.sqrt(count) + 0.8);
 }
 
 function toShape(p: Polyhedron): CANNON.ConvexPolyhedron {
@@ -139,8 +166,28 @@ export function topFaceOf(
   return bestIndex;
 }
 
+/**
+ * O dado assentou de verdade, ou ficou escorado?
+ *
+ * Um poliedro em repouso sobre uma face tem a normal DESSA face apontando para
+ * baixo. Equilibrado numa aresta ou num vértice, nenhuma normal chega perto de
+ * −1. O limiar é por sólido porque o d10 é um trapezoedro: ele apoia num kite
+ * inclinado e não passa de cerca de −0,73 nem quando está perfeitamente estável.
+ */
+function isSettled(dieId: string, q: CANNON.Quaternion): boolean {
+  const normals = normalsFor(dieId);
+  const v = new CANNON.Vec3();
+  let lowest = 1;
+  for (const n of normals) {
+    v.set(n[0], n[1], n[2]);
+    q.vmult(v, v);
+    if (v.y < lowest) lowest = v.y;
+  }
+  return lowest <= (dieId === 'd10' ? -0.5 : -0.7);
+}
+
 export function simulate(opts: SimOptions): SimResult {
-  const { dice, seed, maxSteps = 420, record = false, viewDir } = opts;
+  const { dice, seed, maxSteps = 300, record = false, viewDir } = opts;
   const rng = mulberry32(seed);
   const t0 = performance.now();
 
@@ -215,10 +262,12 @@ export function simulate(opts: SimOptions): SimResult {
         shape: shapeFor(id),
         material: dieMat,
         allowSleep: true,
-        sleepSpeedLimit: 0.3,
-        sleepTimeLimit: 0.15,
-        linearDamping: 0.06,
-        angularDamping: 0.14,
+        sleepSpeedLimit: 0.35,
+        sleepTimeLimit: 0.12,
+        // Amortecimento alto encurta a rolagem sem deixá-la artificial: um
+        // dado em feltro para em pouco mais de um segundo.
+        linearDamping: 0.12,
+        angularDamping: 0.24,
       });
       // ARREMESSO: os dados são atirados de fora da tela, pela base, cruzam o
       // tray em arco e batem na parede do fundo. É bem mais bonito que deixá-los
@@ -253,7 +302,10 @@ export function simulate(opts: SimOptions): SimResult {
       bodies.push(body);
     }
 
-    const frames: DieFrame[][] = dice.map(() => []);
+    // Buffer por dado, dimensionado pelo teto de passos e cortado no fim.
+    const tracks: Float32Array[] = record
+      ? dice.map(() => new Float32Array(maxSteps * 7))
+      : [];
     let restStreak = 0;
     let steps = 0;
 
@@ -263,12 +315,17 @@ export function simulate(opts: SimOptions): SimResult {
       world.step(STEP);
 
       if (record) {
+        const o = steps * 7;
         for (let i = 0; i < bodies.length; i++) {
           const b = bodies[i]!;
-          frames[i]!.push({
-            p: [b.position.x, b.position.y, b.position.z],
-            q: [b.quaternion.x, b.quaternion.y, b.quaternion.z, b.quaternion.w],
-          });
+          const d = tracks[i]!;
+          d[o] = b.position.x;
+          d[o + 1] = b.position.y;
+          d[o + 2] = b.position.z;
+          d[o + 3] = b.quaternion.x;
+          d[o + 4] = b.quaternion.y;
+          d[o + 5] = b.quaternion.z;
+          d[o + 6] = b.quaternion.w;
         }
       }
 
@@ -283,6 +340,10 @@ export function simulate(opts: SimOptions): SimResult {
         break;
       }
     }
+
+    const frames: DieTrack[] = record
+      ? tracks.map((d) => ({ data: d.subarray(0, steps * 7), steps }))
+      : [];
 
     const cpuMs = performance.now() - t0;
 
@@ -300,6 +361,15 @@ export function simulate(opts: SimOptions): SimResult {
       if (b.position.y > TRAY_WALL_H) {
         return { ok: false, degeneracy: 'out-of-tray', steps, cpuMs, frames, topFaces: [] };
       }
+    }
+
+    // Dado escorado é gravação degenerada — mas SÓ vale checar com um dado.
+    //
+    // Com vários, eles encostam uns nos outros e ficam inclinados por um motivo
+    // legítimo: é o que acontece numa mesa de verdade. Aplicar o filtro ali
+    // rejeitava 17% das rolagens de 10 dados sem que houvesse defeito nenhum.
+    if (dice.length === 1 && !isSettled(dice[0]!, bodies[0]!.quaternion)) {
+      return { ok: false, degeneracy: 'no-rest', steps, cpuMs, frames, topFaces: [] };
     }
 
     const topFaces = bodies.map((b, i) => topFaceOf(dice[i]!, b.quaternion, viewDir));

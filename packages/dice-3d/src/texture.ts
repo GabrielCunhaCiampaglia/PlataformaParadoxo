@@ -11,7 +11,7 @@ import * as THREE from 'three';
 export interface AtlasOptions {
   labels: number[];
   cols: number;
-  /** Resolução de cada célula. 256 é suficiente até num tray em tela cheia. */
+  /** Resolução de cada célula. 160 já cobre o dado em tela cheia num celular. */
   cellSize?: number;
   color?: string;
   /** d6 e d9 ficam ambíguos de cabeça para baixo; o traço resolve. */
@@ -30,7 +30,7 @@ export interface AtlasOptions {
 const AMBIGUOUS = new Set([6, 9, 66, 68, 86, 89, 98, 99]);
 
 export function buildNumberAtlas(opts: AtlasOptions): THREE.CanvasTexture {
-  const { labels, cols, cellSize = 256, color = '#ffffff', underlineAmbiguous = true, onlyFace } = opts;
+  const { labels, cols, cellSize = 160, color = '#ffffff', underlineAmbiguous = true, onlyFace } = opts;
   const size = cols * cellSize;
 
   const canvas = document.createElement('canvas');
@@ -73,7 +73,8 @@ export function buildNumberAtlas(opts: AtlasOptions): THREE.CanvasTexture {
 
   const texture = new THREE.CanvasTexture(canvas);
   texture.colorSpace = THREE.SRGBColorSpace;
-  texture.anisotropy = 4;
+  // Anisotropia 2: o dado é visto quase de frente, não em ângulo rasante.
+  texture.anisotropy = 2;
 
   // SEM mipmaps. O número ocupa uma fração pequena da célula, e nos níveis
   // reduzidos ele se dissolvia no fundo transparente — o dado saía em branco.

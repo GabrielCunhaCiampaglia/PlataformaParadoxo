@@ -2,7 +2,7 @@ import * as THREE from 'three';
 import { buildDiceGeometry, circumradius } from './geometry.js';
 import { labelFaces, splitPercentile } from './label.js';
 import { POLYHEDRA } from './polyhedra.js';
-import { simulate, trayHalfFor, type DieFrame } from './simulate.js';
+import { readTrack, simulate, trayHalfFor, type DieTrack } from './simulate.js';
 import { buildNumberAtlas } from './texture.js';
 
 /**
@@ -49,18 +49,18 @@ export interface RollOptions {
   speed?: number;
   onSettled?: () => void;
   /**
-   * Numera TODAS as faces, e não só a que assentou.
+   * Numera SÓ a face que assentou, deixando as outras em branco.
    *
-   * Opção 2 do doc 08 §3.2: mais crível se houver câmera livre, ao custo de o
-   * jogador ver vários números e precisar identificar qual é o resultado.
+   * Por padrão o dado é numerado por inteiro, como um dado de verdade. Esta
+   * opção existe para o caso de a leitura precisar ser inequívoca.
    */
-  numberAllFaces?: boolean;
+  numberOnlyTopFace?: boolean;
 }
 
 interface DieInstance {
   mesh: THREE.Mesh;
   material: THREE.MeshStandardMaterial;
-  frames: DieFrame[];
+  track: DieTrack;
   reveal: { value: number };
 }
 
@@ -97,16 +97,19 @@ export class DiceRenderer {
   lastDiagnostics: RendererDiagnostics | null = null;
 
   constructor(private readonly canvas: HTMLCanvasElement) {
+    // Numa tela densa o antialias não compensa: o custo de MSAA é real e o
+    // ganho some no pixel ratio. Em tela normal ele fica ligado.
+    const dpr = globalThis.devicePixelRatio || 1;
     this.renderer = new THREE.WebGLRenderer({
       canvas,
       alpha: true,
-      antialias: true,
+      antialias: dpr < 1.5,
       powerPreference: 'high-performance',
-      preserveDrawingBuffer: true,
     });
     this.renderer.setClearColor(0x000000, 0);
-    // Teto de 2: acima disso é bateria gasta sem ganho visível num celular.
-    this.renderer.setPixelRatio(Math.min(globalThis.devicePixelRatio || 1, 2));
+    // Teto de 1,75: acima disso é bateria gasta sem ganho visível num celular,
+    // e o custo de fragment cresce com o QUADRADO do fator.
+    this.renderer.setPixelRatio(Math.min(dpr, 1.75));
     this.renderer.shadowMap.enabled = true;
     this.renderer.shadowMap.type = THREE.PCFSoftShadowMap;
     this.renderer.toneMapping = THREE.ACESFilmicToneMapping;
@@ -121,13 +124,15 @@ export class DiceRenderer {
 
   private setupLights(): void {
     // Ambiente frio e baixo: o dado precisa ler como objeto escuro, não cinza.
-    this.scene.add(new THREE.HemisphereLight(0x8899bb, 0x0a0812, 0.55));
+    this.scene.add(new THREE.HemisphereLight(0x93a6c6, 0x0a0812, 0.85));
 
     const key = new THREE.DirectionalLight(0xfff4e8, 2.8);
     // Quase sobre a cena: a sombra cai SOB o dado em vez de ao lado dele.
     key.position.set(0.9, 12, 2.6);
     key.castShadow = true;
-    key.shadow.mapSize.set(2048, 2048);
+    // 1024 basta para uma sombra difusa de dado; 2048 quadruplica o custo do
+    // shadow pass sem diferença perceptível nesta escala.
+    key.shadow.mapSize.set(1024, 1024);
     key.shadow.camera.near = 1;
     key.shadow.camera.far = 30;
     const s = 8;
@@ -144,9 +149,8 @@ export class DiceRenderer {
     rim.position.set(-6, 3, -4);
     this.scene.add(rim);
 
-    const fill = new THREE.DirectionalLight(0x4a6fa5, 0.7);
-    fill.position.set(-3, 4, 6);
-    this.scene.add(fill);
+    // O preenchimento frio vem do HemisphereLight acima; uma terceira luz
+    // direcional só somava custo por fragmento.
   }
 
   private setupFloor(): void {
@@ -176,30 +180,44 @@ export class DiceRenderer {
   }
 
   /**
-   * Enquadra ONDE OS DADOS PARARAM, não o tray inteiro.
+   * Enquadra o tray com folga, mirando o centro dele.
    *
-   * Como os dados são arremessados da frente, eles assentam no fundo do tray —
-   * enquadrar o tray deixava metade do quadro vazio e os dados espremidos no
-   * topo da tela. Mirar no grupo de dados os traz para o centro e permite
-   * chegar bem mais perto.
+   * Fechar no ponto onde os dados param deixava a rolagem feia: os dados são
+   * arremessados de fora e, com a câmera apertada no destino, entravam em cena
+   * só no último instante. Enquadrando o tray inteiro dá para ver o arremesso.
    */
-  private frameToDice(positions: Array<[number, number, number]>, dieRadius: number): void {
-    if (positions.length === 0) return;
+  private frameToTray(
+    trayHalf: number,
+    dieRadius: number,
+    restPositions: Array<[number, number, number]>,
+  ): void {
+    this.trayHalf = trayHalf;
 
-    const min = new THREE.Vector3(Infinity, Infinity, Infinity);
-    const max = new THREE.Vector3(-Infinity, -Infinity, -Infinity);
-    for (const [x, y, z] of positions) {
-      min.min(new THREE.Vector3(x, y, z));
-      max.max(new THREE.Vector3(x, y, z));
+    // MIRA no grupo de dados, RAIO amplo. As duas coisas resolvem problemas
+    // diferentes e precisam ser decididas separadamente:
+    //
+    // - mirar no centro do tray deixava os dados encostados na borda de cima do
+    //   quadro, porque eles são arremessados da frente e assentam no fundo;
+    // - fechar o raio no grupo deixava a chegada invisível, já que os dados
+    //   entram em cena vindos de fora.
+    let cx = 0;
+    let cz = 0;
+    for (const [x, , z] of restPositions) {
+      cx += x;
+      cz += z;
     }
-    this.target.copy(min).add(max).multiplyScalar(0.5);
-    // Mira um pouco acima do chão, na altura do corpo do dado.
-    this.target.y = dieRadius * 0.35;
+    const n = Math.max(1, restPositions.length);
+    this.target.set(cx / n, dieRadius * 0.3, cz / n);
 
-    // Raio que cobre o grupo inteiro, mais o corpo do dado e uma margem
-    // pequena para o resultado não encostar na borda.
-    const spread = min.distanceTo(max) / 2;
-    this.frameRadius = spread + dieRadius * 1.32;
+    // Espalhamento do grupo, para vários dados não saírem do quadro.
+    let spread = 0;
+    for (const [x, , z] of restPositions) {
+      spread = Math.max(spread, Math.hypot(x - this.target.x, z - this.target.z));
+    }
+
+    // O piso é INDEPENDENTE do tray físico: afastar a câmera é de graça,
+    // aumentar o tray custa passos de simulação.
+    this.frameRadius = Math.max(spread + dieRadius * 2.2, 2.8);
     this.applyCamera();
   }
 
@@ -314,7 +332,7 @@ export class DiceRenderer {
    * Roda a rolagem. Resolve quando os números terminam de aparecer.
    */
   async roll(opts: RollOptions): Promise<RendererDiagnostics> {
-    const { dice, seed = Math.floor(Math.random() * 1e9), speed = 1, onSettled, numberAllFaces } = opts;
+    const { dice, seed = Math.floor(Math.random() * 1e9), speed = 1, onSettled, numberOnlyTopFace } = opts;
     cancelAnimationFrame(this.raf);
     this.clearDice();
 
@@ -336,14 +354,10 @@ export class DiceRenderer {
     for (let i = 0; i < dice.length; i++) {
       const spec = dice[i]!;
       const poly = POLYHEDRA[spec.id]!;
-      // A geometria é construída DEPOIS da física, então dá para orientar a
-      // face vencedora com a rotação final e o número sair de pé na tela.
-      const last = sim.frames[i]![sim.frames[i]!.length - 1]!;
-      const finalQ = new THREE.Quaternion(last.q[0], last.q[1], last.q[2], last.q[3]);
-      const { geometry, cols } = buildDiceGeometry(poly, 0.92, {
-        faceIndex: sim.topFaces[i]!,
-        quaternion: finalQ,
-      });
+      // Sem orientar o texto pela rotação final: a numeração é FIXA na face,
+      // como num dado de verdade. Alinhar o número com a tela a cada rolagem
+      // deixava o resultado com cara de adesivo colado, não de dado rolado.
+      const { geometry, cols } = buildDiceGeometry(poly);
       const labels = labelFaces({
         dieId: spec.id,
         topFaceIndex: sim.topFaces[i]!,
@@ -354,7 +368,7 @@ export class DiceRenderer {
       const atlas = buildNumberAtlas({
         labels,
         cols,
-        ...(numberAllFaces ? {} : { onlyFace: sim.topFaces[i]! }),
+        ...(numberOnlyTopFace ? { onlyFace: sim.topFaces[i]! } : {}),
       });
 
       const material = this.makeMaterial();
@@ -366,20 +380,20 @@ export class DiceRenderer {
       this.setUniform(material, 'uNumberMap', atlas);
       this.setUniform(material, 'uReveal', 0);
 
-      const first = sim.frames[i]![0]!;
-      mesh.position.set(first.p[0], first.p[1], first.p[2]);
-      mesh.quaternion.set(first.q[0], first.q[1], first.q[2], first.q[3]);
+      const track = sim.frames[i]!;
+      readTrack(track, 0, mesh.position, mesh.quaternion);
 
-      this.dice.push({ mesh, material, frames: sim.frames[i]!, reveal: { value: 0 } });
+      this.dice.push({ mesh, material, track, reveal: { value: 0 } });
     }
 
     // --- 3. diagnóstico de contenção ---
     const restPositions = this.dice.map((d) => {
-      const f = d.frames[d.frames.length - 1]!;
-      return [f.p[0], f.p[1], f.p[2]] as [number, number, number];
+      const o = (d.track.steps - 1) * 7;
+      const a = d.track.data;
+      return [a[o]!, a[o + 1]!, a[o + 2]!] as [number, number, number];
     });
     const maxR = Math.max(...dice.map((d) => circumradius(POLYHEDRA[d.id]!)));
-    this.frameToDice(restPositions, maxR);
+    this.frameToTray(trayHalf, maxR, restPositions);
     const contained = restPositions.every(
       ([x, y, z]) =>
         Math.abs(x) <= trayHalf + maxR && Math.abs(z) <= trayHalf + maxR && y > -0.2 && y < 4,
@@ -447,14 +461,12 @@ export class DiceRenderer {
   private skipToRest(): void {
     cancelAnimationFrame(this.raf);
     for (const d of this.dice) {
-      const f = d.frames[d.frames.length - 1]!;
-      d.mesh.position.set(f.p[0], f.p[1], f.p[2]);
-      d.mesh.quaternion.set(f.q[0], f.q[1], f.q[2], f.q[3]);
+      readTrack(d.track, d.track.steps - 1, d.mesh.position, d.mesh.quaternion);
     }
   }
 
   private play(speed: number): Promise<number> {
-    const total = Math.max(...this.dice.map((d) => d.frames.length));
+    const total = Math.max(...this.dice.map((d) => d.track.steps));
     const expectedMs = (total * STEP_MS) / speed;
 
     // Já em segundo plano: nem começa a animar, vai direto ao repouso.
@@ -473,9 +485,7 @@ export class DiceRenderer {
           const frame = Math.floor(elapsed / STEP_MS);
 
           for (const d of this.dice) {
-            const f = d.frames[Math.min(frame, d.frames.length - 1)]!;
-            d.mesh.position.set(f.p[0], f.p[1], f.p[2]);
-            d.mesh.quaternion.set(f.q[0], f.q[1], f.q[2], f.q[3]);
+            readTrack(d.track, frame, d.mesh.position, d.mesh.quaternion);
           }
           this.renderOnce();
 
@@ -612,12 +622,32 @@ export class DiceRenderer {
   }
 
   /**
-   * PNG do frame atual, em data URL. Render e leitura acontecem na mesma volta
-   * síncrona — sem isso o buffer já teria sido descartado pelo compositor.
+   * PNG do frame atual, em data URL.
+   *
+   * Lê o buffer com `readPixels` logo após renderizar, em vez de depender de
+   * `preserveDrawingBuffer` — essa flag força o driver a manter uma cópia do
+   * framebuffer a cada frame e custa caro em GPU móvel.
    */
   snapshot(): string {
     this.renderOnce();
-    return this.canvas.toDataURL('image/png');
+    const gl = this.renderer.getContext();
+    const w = gl.drawingBufferWidth;
+    const h = gl.drawingBufferHeight;
+    const buf = new Uint8ClampedArray(w * h * 4);
+    gl.readPixels(0, 0, w, h, gl.RGBA, gl.UNSIGNED_BYTE, buf);
+
+    // O WebGL entrega as linhas de baixo para cima; o canvas 2D espera o oposto.
+    const flipped = new Uint8ClampedArray(w * h * 4);
+    const stride = w * 4;
+    for (let y = 0; y < h; y++) {
+      flipped.set(buf.subarray(y * stride, (y + 1) * stride), (h - 1 - y) * stride);
+    }
+
+    const out = document.createElement('canvas');
+    out.width = w;
+    out.height = h;
+    out.getContext('2d')?.putImageData(new ImageData(flipped, w, h), 0, 0);
+    return out.toDataURL('image/png');
   }
 
   /** PNG do atlas de números do primeiro dado — para inspeção visual. */
@@ -632,9 +662,7 @@ export class DiceRenderer {
   skip(): void {
     cancelAnimationFrame(this.raf);
     for (const d of this.dice) {
-      const f = d.frames[d.frames.length - 1]!;
-      d.mesh.position.set(f.p[0], f.p[1], f.p[2]);
-      d.mesh.quaternion.set(f.q[0], f.q[1], f.q[2], f.q[3]);
+      readTrack(d.track, d.track.steps - 1, d.mesh.position, d.mesh.quaternion);
       this.setUniform(d.material, 'uReveal', 1);
     }
     this.renderOnce();

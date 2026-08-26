@@ -1,7 +1,7 @@
 export { POLYHEDRA, validate, faceNormal, faceCentroid } from './polyhedra.js';
 export type { Polyhedron, Vec3, ValidationIssue } from './polyhedra.js';
-export { simulate, topFaceOf, mulberry32, trayHalfFor } from './simulate.js';
-export type { SimResult, SimOptions, DieFrame, Degeneracy } from './simulate.js';
+export { simulate, topFaceOf, mulberry32, trayHalfFor, readTrack } from './simulate.js';
+export type { SimResult, SimOptions, DieTrack, Degeneracy } from './simulate.js';
 export { labelFaces, readTopValue, faceValuesFor, splitPercentile, joinPercentile } from './label.js';
 export type { LabelOptions } from './label.js';
 export { buildDiceGeometry, circumradius } from './geometry.js';
