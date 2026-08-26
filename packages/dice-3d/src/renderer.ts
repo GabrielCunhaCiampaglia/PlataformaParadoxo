@@ -3,7 +3,7 @@ import { buildDiceGeometry, circumradius } from './geometry.js';
 import { labelFaces, splitPercentile } from './label.js';
 import { POLYHEDRA } from './polyhedra.js';
 import { readTrack, simulate, trayHalfFor, type DieTrack } from './simulate.js';
-import { buildNumberAtlas } from './texture.js';
+import { buildNumberAtlas, ensureDiceFont } from './texture.js';
 
 /**
  * Renderer da rolagem 3D.
@@ -26,8 +26,14 @@ const VIEW_DIR = [0, 0.978, 0.208] as const;
 
 type DiceUniforms = {
   uReveal: { value: number };
+  /** Brilho passageiro no instante em que o número surge. */
+  uFlash: { value: number };
+  /** Lado do atlas em células — o shader precisa dele para achar o centro da célula. */
+  uCols: { value: number };
   uNumberMap: { value: THREE.Texture | null };
 };
+
+type UniformName = keyof DiceUniforms;
 
 type MaterialWithUniforms = THREE.MeshStandardMaterial & {
   userData: { diceUniforms?: DiceUniforms };
@@ -272,31 +278,48 @@ export class DiceRenderer {
     // após a primeira — a textura de números ficava nula e o dado saía em
     // branco. Guardando a referência aos objetos de uniform, basta alterar
     // `.value`, independentemente de o shader ter sido recompilado ou não.
-    const uniforms = {
+    const uniforms: DiceUniforms = {
       uReveal: { value: 0 },
+      uFlash: { value: 0 },
+      uCols: { value: 1 },
       uNumberMap: { value: null as THREE.Texture | null },
     };
     (mat as MaterialWithUniforms).userData.diceUniforms = uniforms;
 
-    // `uReveal` mistura o número por cima da cor do dado. Em 0 a face está em
-    // branco; em 1 o número está pleno. É o fade da revelação.
+    // A revelação, no shader.
+    //
+    // Antes era só a opacidade do número subindo de 0 a 1 — lê como imagem
+    // carregando, não como resultado sendo revelado. Agora são três coisas ao
+    // mesmo tempo: o dígito CRESCE até assentar no tamanho certo, a opacidade
+    // entra atrás dele, e um brilho passa e some.
+    //
+    // A escala é feita amostrando a UV mais perto do centro da PRÓPRIA célula —
+    // por isso o `uCols`. O fator vai de 0,72 a 1,0, nunca acima: passar de 1
+    // sairia da célula e puxaria o número da face vizinha para dentro desta.
     mat.onBeforeCompile = (shader) => {
       shader.uniforms.uReveal = uniforms.uReveal;
+      shader.uniforms.uFlash = uniforms.uFlash;
+      shader.uniforms.uCols = uniforms.uCols;
       shader.uniforms.uNumberMap = uniforms.uNumberMap;
       shader.fragmentShader = shader.fragmentShader
         .replace(
           '#include <common>',
           `#include <common>
            uniform float uReveal;
+           uniform float uFlash;
+           uniform float uCols;
            uniform sampler2D uNumberMap;`,
         )
         .replace(
           '#include <emissivemap_fragment>',
           `#include <emissivemap_fragment>
-           vec4 numTex = texture2D(uNumberMap, vUv);
+           vec2 cellCenter = (floor(vUv * uCols) + 0.5) / uCols;
+           float grow = mix(0.72, 1.0, uReveal);
+           vec2 numUv = cellCenter + (vUv - cellCenter) * grow;
+           vec4 numTex = texture2D(uNumberMap, numUv);
            float a = numTex.a * uReveal;
            diffuseColor.rgb = mix(diffuseColor.rgb, numTex.rgb, a);
-           totalEmissiveRadiance += numTex.rgb * a * 0.55;`,
+           totalEmissiveRadiance += numTex.rgb * a * (0.35 + uFlash * 2.4);`,
         );
     };
     // Sem customProgramCacheKey: o three.js chama onBeforeCompile ANTES de
@@ -306,11 +329,11 @@ export class DiceRenderer {
     return mat;
   }
 
-  private setUniform(mat: THREE.MeshStandardMaterial, name: 'uReveal' | 'uNumberMap', value: unknown): void {
+  private setUniform(mat: THREE.MeshStandardMaterial, name: UniformName, value: unknown): void {
     const u = (mat as MaterialWithUniforms).userData.diceUniforms;
     if (!u) return;
-    if (name === 'uReveal') u.uReveal.value = value as number;
-    else u.uNumberMap.value = value as THREE.Texture | null;
+    if (name === 'uNumberMap') u.uNumberMap.value = value as THREE.Texture | null;
+    else u[name].value = value as number;
   }
 
   private clearDice(): void {
@@ -348,13 +371,16 @@ export class DiceRenderer {
     const simMs = performance.now() - t0;
     if (!sim.ok) throw new Error('Não foi possível gerar uma rolagem válida');
 
+    // A webfont tem de estar carregada antes do primeiro atlas; ver texture.ts.
+    await ensureDiceFont();
+
     const trayHalf = trayHalfFor(dice.length);
 
     // --- 2. rotulagem pós-simulação, antes do primeiro pixel ---
     for (let i = 0; i < dice.length; i++) {
       const spec = dice[i]!;
       const poly = POLYHEDRA[spec.id]!;
-      const { geometry, cols } = buildDiceGeometry(poly);
+      const { geometry, cols, aspect } = buildDiceGeometry(poly);
       const labels = labelFaces({
         dieId: spec.id,
         topFaceIndex: sim.topFaces[i]!,
@@ -365,6 +391,7 @@ export class DiceRenderer {
       const atlas = buildNumberAtlas({
         labels,
         cols,
+        aspect,
         ...(numberOnlyTopFace ? { onlyFace: sim.topFaces[i]! } : {}),
       });
 
@@ -375,7 +402,9 @@ export class DiceRenderer {
       this.group.add(mesh);
 
       this.setUniform(material, 'uNumberMap', atlas);
+      this.setUniform(material, 'uCols', cols);
       this.setUniform(material, 'uReveal', 0);
+      this.setUniform(material, 'uFlash', 0);
 
       const track = sim.frames[i]!;
       readTrack(track, 0, mesh.position, mesh.quaternion);
@@ -499,34 +528,57 @@ export class DiceRenderer {
    * O beat de silêncio antes do fade é o que dá peso dramático: sem ele, o
    * efeito lê como atraso de carregamento; com ele, lê como revelação.
    */
-  private revealNumbers(beatMs = 140, fadeMs = 480): Promise<void> {
-    const setAll = (v: number) => {
-      for (const d of this.dice) this.setUniform(d.material, 'uReveal', v);
+  private revealNumbers(beatMs = 140, fadeMs = 420): Promise<void> {
+    const done = () => {
+      for (const d of this.dice) {
+        this.setUniform(d.material, 'uReveal', 1);
+        this.setUniform(d.material, 'uFlash', 0);
+      }
     };
 
     if (typeof document !== 'undefined' && document.hidden) {
-      setAll(1);
+      done();
       return Promise.resolve();
     }
 
+    // Os dados revelam em cascata, não todos de uma vez.
+    //
+    // Com 10 dados acendendo no mesmo quadro o olho não tem onde pousar e o
+    // efeito vira um lampejo só. Escalonando, a leitura acompanha a cascata. O
+    // atraso total fica limitado para a rolagem não arrastar.
+    const n = Math.max(1, this.dice.length);
+    const stagger = Math.min(70, 420 / n);
+    const totalMs = beatMs + (n - 1) * stagger + fadeMs;
+
     return this.withWatchdog<void>(
-      beatMs + fadeMs + 1200,
+      totalMs + 1200,
       (finish) => {
         const start = performance.now();
         const tick = () => {
           if (this.disposed) return finish();
           const t = performance.now() - start;
-          const raw = Math.min(1, Math.max(0, (t - beatMs) / fadeMs));
-          // easeOutCubic: rápido no começo, assentando no fim.
-          setAll(1 - Math.pow(1 - raw, 3));
+          for (let i = 0; i < this.dice.length; i++) {
+            const d = this.dice[i]!;
+            const local = (t - beatMs - i * stagger) / fadeMs;
+            const raw = Math.min(1, Math.max(0, local));
+            // easeOutCubic: rápido no começo, assentando no fim.
+            this.setUniform(d.material, 'uReveal', 1 - Math.pow(1 - raw, 3));
+            // Envelope do brilho: sobe, passa pelo pico no meio e volta a zero.
+            // Zerar no fim importa — um resíduo deixaria o número lavado.
+            this.setUniform(
+              d.material,
+              'uFlash',
+              raw > 0 && raw < 1 ? Math.pow(Math.sin(Math.PI * raw), 1.5) : 0,
+            );
+          }
           this.renderOnce();
-          if (raw >= 1) return finish();
+          if (t >= totalMs) return finish();
           this.raf = requestAnimationFrame(tick);
         };
         this.raf = requestAnimationFrame(tick);
       },
       () => {
-        setAll(1);
+        done();
         this.renderOnce();
       },
     );

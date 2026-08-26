@@ -54,6 +54,20 @@ export interface DiceGeometryResult {
   geometry: THREE.BufferGeometry;
   /** Lado do atlas em células: `cols × cols` cobre todas as faces. */
   cols: number;
+  /**
+   * Largura ÷ altura da face, em unidades de mundo.
+   *
+   * A célula do atlas é quadrada, mas a face quase nunca é: o triângulo do d20
+   * é mais alto que largo, e o kite do d10 é MUITO mais alto que largo. Como
+   * cada eixo da UV é normalizado pelo seu próprio alcance — necessário, senão
+   * o número cai fora da face —, a célula quadrada é espremida sobre uma face
+   * não quadrada, e o número sai DEFORMADO.
+   *
+   * O atlas desenha o dígito pré-esticado pelo inverso disto, e a deformação se
+   * cancela na leitura. Todas as faces de um mesmo sólido são congruentes,
+   * então um valor por dado basta.
+   */
+  aspect: number;
 }
 
 /**
@@ -63,6 +77,8 @@ export interface DiceGeometryResult {
 export function buildDiceGeometry(p: Polyhedron, inset = 0.92): DiceGeometryResult {
   const cols = Math.ceil(Math.sqrt(p.faceCount));
   const cell = 1 / cols;
+
+  let aspect = 1;
 
   const positions: number[] = [];
   const normals: number[] = [];
@@ -93,6 +109,8 @@ export function buildDiceGeometry(p: Polyhedron, inset = 0.92): DiceGeometryResu
     // com 55% da célula — caía inteiro fora da face. O d10 saía em branco.
     const halfX = Math.max(...projected.map((q) => Math.abs(q.x))) || 1;
     const halfY = Math.max(...projected.map((q) => Math.abs(q.y))) || 1;
+
+    if (f === 0) aspect = halfX / halfY;
 
     // Célula deste índice de face no atlas.
     //
@@ -139,7 +157,7 @@ export function buildDiceGeometry(p: Polyhedron, inset = 0.92): DiceGeometryResu
   geometry.setAttribute('uv', new THREE.Float32BufferAttribute(uvs, 2));
   geometry.computeBoundingSphere();
 
-  return { geometry, cols };
+  return { geometry, cols, aspect };
 }
 
 /** Raio da esfera que contém o sólido — usado para enquadrar a câmera. */

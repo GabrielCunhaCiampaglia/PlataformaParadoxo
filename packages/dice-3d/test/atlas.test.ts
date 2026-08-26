@@ -44,6 +44,20 @@ describe('Atlas — a face lê a própria célula', () => {
     });
   }
 
+  it('reporta o aspecto da face, para o atlas desfazer a deformação', () => {
+    // A face do d6 é quadrada: nada a compensar.
+    expect(buildDiceGeometry(POLYHEDRA.d6!).aspect).toBeCloseTo(1, 2);
+
+    // As demais são mais altas que largas, então o dígito precisa ser desenhado
+    // mais largo no atlas para chegar proporcional na face. Se algum destes
+    // voltar a 1, a compensação sumiu e o número volta a sair espremido.
+    for (const id of ['d4', 'd8', 'd20', 'd10'] as const) {
+      const { aspect } = buildDiceGeometry(POLYHEDRA[id]!);
+      expect(aspect, `${id} sem compensação de aspecto`).toBeLessThan(0.95);
+      expect(aspect, `${id} com aspecto absurdo`).toBeGreaterThan(0.2);
+    }
+  });
+
   it('a orientação do número acompanha a face, não o mundo', () => {
     // O eixo U da UV precisa ser paralelo a uma ARESTA da face. Se ele vier de
     // um vetor auxiliar do mundo, o número sai em ângulo aleatório em relação
