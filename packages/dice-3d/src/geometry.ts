@@ -11,53 +11,43 @@ import { faceCentroid, faceNormal, type Polyhedron } from './polyhedra.js';
  * nunca muda.
  */
 
-/** Base ortonormal do plano de uma face. */
-function basisFor(normal: THREE.Vector3): { u: THREE.Vector3; v: THREE.Vector3 } {
-  // Escolhe um vetor auxiliar que não seja paralelo à normal.
-  const aux =
-    Math.abs(normal.y) < 0.9 ? new THREE.Vector3(0, 1, 0) : new THREE.Vector3(1, 0, 0);
-  const u = new THREE.Vector3().crossVectors(aux, normal).normalize();
+/**
+ * Base ortonormal do plano de uma face, ALINHADA COM A GEOMETRIA DELA.
+ *
+ * A versão anterior derivava a base de um vetor auxiliar do mundo (+Y ou +X).
+ * Isso é arbitrário: nada nele tem relação com a face, e o número saía impresso
+ * em ângulo aleatório em relação às arestas — "torto", mesmo quando o dado
+ * assentava direito. Num dado de verdade o número é alinhado com a face.
+ *
+ * Aqui a base sai da PRÓPRIA face:
+ *  - o eixo U segue a primeira aresta, então o número fica paralelo a ela;
+ *  - em faces alongadas (o kite do d10), o eixo V segue o eixo longo, que é
+ *    como o número é impresso num d10 real.
+ */
+function faceBasis(
+  vertices: THREE.Vector3[],
+  centroid: THREE.Vector3,
+  normal: THREE.Vector3,
+): { u: THREE.Vector3; v: THREE.Vector3 } {
+  // Quão longe cada vértice está do centro. Num kite, um deles destoa.
+  const dists = vertices.map((p) => p.distanceTo(centroid));
+  const maxD = Math.max(...dists);
+  const minD = Math.min(...dists);
+
+  let u: THREE.Vector3;
+  if (maxD > minD * 1.45) {
+    // Face alongada: V ao longo do eixo maior, do vértice distante ao centro.
+    const apex = vertices[dists.indexOf(maxD)]!;
+    const v = apex.clone().sub(centroid).normalize();
+    u = new THREE.Vector3().crossVectors(v, normal).normalize();
+    return { u, v: new THREE.Vector3().crossVectors(normal, u).normalize() };
+  }
+
+  // Face regular: U ao longo da primeira aresta.
+  u = vertices[1]!.clone().sub(vertices[0]!);
+  u.addScaledVector(normal, -u.dot(normal)).normalize();
   const v = new THREE.Vector3().crossVectors(normal, u).normalize();
   return { u, v };
-}
-
-/**
- * Base do plano de uma face ALINHADA para o texto ficar de pé na tela.
- *
- * A base arbitrária acima faz o número sair girado — um "17" deitado de lado é
- * legível, mas parece defeito. Como a geometria é construída depois da física,
- * dá para orientar a face vencedora usando a rotação final do dado: projeta-se
- * a direção "para cima na tela" no plano da face e usa-se ela como eixo V.
- *
- * @param screenUp Direção que aparece como "para cima" na tela, em espaço de
- *   mundo. Com a câmera olhando de cima, é −Z.
- */
-function alignedBasis(
-  normal: THREE.Vector3,
-  quaternion: THREE.Quaternion,
-  screenUp: THREE.Vector3,
-): { u: THREE.Vector3; v: THREE.Vector3 } {
-  // Traz o "para cima da tela" para o espaço LOCAL do dado.
-  const inv = quaternion.clone().invert();
-  const upLocal = screenUp.clone().applyQuaternion(inv);
-
-  // Projeta no plano da face e normaliza. Se a projeção for degenerada
-  // (a face está de topo para a tela), cai na base arbitrária.
-  const v = upLocal.clone().addScaledVector(normal, -upLocal.dot(normal));
-  if (v.lengthSq() < 1e-6) return basisFor(normal);
-  v.normalize();
-
-  const u = new THREE.Vector3().crossVectors(v, normal).normalize();
-  return { u, v };
-}
-
-export interface OrientOptions {
-  /** Índice da face a orientar — normalmente a que assentou para cima. */
-  faceIndex: number;
-  /** Rotação final do dado, vinda da simulação. */
-  quaternion: THREE.Quaternion;
-  /** Direção de "para cima na tela", em mundo. Padrão: −Z. */
-  screenUp?: THREE.Vector3;
 }
 
 export interface DiceGeometryResult {
@@ -70,11 +60,7 @@ export interface DiceGeometryResult {
  * @param inset Quanto o desenho da face encolhe dentro da célula, para o número
  *   não encostar na borda nem vazar para a célula vizinha.
  */
-export function buildDiceGeometry(
-  p: Polyhedron,
-  inset = 0.92,
-  orient?: OrientOptions,
-): DiceGeometryResult {
+export function buildDiceGeometry(p: Polyhedron, inset = 0.92): DiceGeometryResult {
   const cols = Math.ceil(Math.sqrt(p.faceCount));
   const cell = 1 / cols;
 
@@ -88,15 +74,15 @@ export function buildDiceGeometry(
     const c3 = faceCentroid(p, f);
     const normal = new THREE.Vector3(n3[0], n3[1], n3[2]);
     const centroid = new THREE.Vector3(c3[0], c3[1], c3[2]);
-    const { u, v } =
-      orient && orient.faceIndex === f
-        ? alignedBasis(normal, orient.quaternion, orient.screenUp ?? new THREE.Vector3(0, 0, -1))
-        : basisFor(normal);
-
-    // Projeta os vértices no plano da face e mede o raio, para normalizar.
-    const projected = face.map((vi) => {
+    const worldVerts = face.map((vi) => {
       const p3 = p.vertices[vi]!;
-      const d = new THREE.Vector3(p3[0], p3[1], p3[2]).sub(centroid);
+      return new THREE.Vector3(p3[0], p3[1], p3[2]);
+    });
+    const { u, v } = faceBasis(worldVerts, centroid, normal);
+
+    // Projeta os vértices no plano da face.
+    const projected = worldVerts.map((w) => {
+      const d = w.clone().sub(centroid);
       return new THREE.Vector2(d.dot(u), d.dot(v));
     });
     // Normaliza CADA EIXO pelo seu próprio alcance, e não os dois pelo raio.

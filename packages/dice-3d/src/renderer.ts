@@ -354,9 +354,6 @@ export class DiceRenderer {
     for (let i = 0; i < dice.length; i++) {
       const spec = dice[i]!;
       const poly = POLYHEDRA[spec.id]!;
-      // Sem orientar o texto pela rotação final: a numeração é FIXA na face,
-      // como num dado de verdade. Alinhar o número com a tela a cada rolagem
-      // deixava o resultado com cara de adesivo colado, não de dado rolado.
       const { geometry, cols } = buildDiceGeometry(poly);
       const labels = labelFaces({
         dieId: spec.id,

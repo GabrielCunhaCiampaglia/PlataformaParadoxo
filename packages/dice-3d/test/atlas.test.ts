@@ -1,4 +1,3 @@
-import * as THREE from 'three';
 import { describe, expect, it } from 'vitest';
 import { buildDiceGeometry } from '../src/geometry.js';
 import { POLYHEDRA } from '../src/polyhedra.js';
@@ -45,37 +44,25 @@ describe('Atlas — a face lê a própria célula', () => {
     });
   }
 
-  it('o número sai DE PÉ na face que assentou', () => {
-    // Sem rotação, a face de cima do d6 tem normal +Y. O eixo V da UV precisa
-    // crescer na direção que a câmera lê como "para cima" — caso contrário o
-    // número aparece de cabeça para baixo.
+  it('a orientação do número acompanha a face, não o mundo', () => {
+    // O eixo U da UV precisa ser paralelo a uma ARESTA da face. Se ele vier de
+    // um vetor auxiliar do mundo, o número sai em ângulo aleatório em relação
+    // à face e parece torto mesmo com o dado assentado direito.
     const p = POLYHEDRA.d6!;
-    const topFace = p.faces.findIndex((_, i) => {
-      const c = p.faces[i]!.map((vi) => p.vertices[vi]!);
-      return c.every((v) => Math.abs(v[1] - c[0]![1]) < 1e-9) && c[0]![1] > 0.5;
-    });
-    expect(topFace).toBeGreaterThanOrEqual(0);
-
-    const { geometry, cols } = buildDiceGeometry(p, 0.92, {
-      faceIndex: topFace,
-      quaternion: new THREE.Quaternion(),
-    });
+    const { geometry } = buildDiceGeometry(p, 1);
     const uv = geometry.getAttribute('uv');
     const pos = geometry.getAttribute('position');
 
-    // Entre os vértices dessa face, o de menor Z (mais longe da câmera, ou seja
-    // "para cima" na tela) precisa ter o maior V.
-    const start = topFace * (p.faces[topFace]!.length - 2) * 3;
-    const verts = (p.faces[topFace]!.length - 2) * 3;
-    let farZ = { z: Infinity, v: 0 };
-    let nearZ = { z: -Infinity, v: 0 };
-    for (let k = 0; k < verts; k++) {
-      const z = pos.getZ(start + k);
-      const v = uv.getY(start + k);
-      if (z < farZ.z) farZ = { z, v };
-      if (z > nearZ.z) nearZ = { z, v };
+    for (let f = 0; f < p.faces.length; f++) {
+      const start = f * (p.faces[f]!.length - 2) * 3;
+      // Vértices 0 e 1 do leque são as pontas da primeira aresta da face.
+      const du = uv.getX(start + 1) - uv.getX(start);
+      const dv = uv.getY(start + 1) - uv.getY(start);
+      // Paralelo ao eixo U: a componente V da aresta é praticamente nula.
+      expect(Math.abs(dv), `face ${f} com aresta fora do eixo U`).toBeLessThan(
+        Math.abs(du) * 0.02,
+      );
+      expect(pos.count).toBeGreaterThan(0);
     }
-    expect(farZ.v).toBeGreaterThan(nearZ.v);
-    expect(cols).toBe(3);
   });
 });
