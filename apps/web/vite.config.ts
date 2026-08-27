@@ -54,10 +54,11 @@ export default defineConfig({
   resolve: {
     alias: {
       '@paradoxo/dice-3d': resolve(import.meta.dirname, '../../packages/dice-3d/src/index.ts'),
+      '@paradoxo/table-3d': resolve(import.meta.dirname, '../../packages/table-3d/src/index.ts'),
       '@paradoxo/rules': resolve(import.meta.dirname, '../../packages/rules/src/index.ts'),
     },
   },
-  optimizeDeps: { exclude: ['@paradoxo/dice-3d', '@paradoxo/rules'] },
+  optimizeDeps: { exclude: ['@paradoxo/dice-3d', '@paradoxo/rules', '@paradoxo/table-3d'] },
   build: { target: 'es2022', sourcemap: false },
   server: {
     // Respeita a porta atribuída pelo harness de preview quando existir.

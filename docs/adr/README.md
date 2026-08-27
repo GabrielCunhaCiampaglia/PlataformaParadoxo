@@ -17,6 +17,7 @@ que a substitui.
 | [0009](0009-tempo-real.md) | Feed de rolagens em tempo real | Aceita |
 | [0010](0010-rolagem-3d.md) | Rolagem 3D: three.js + cannon-es, com rotulagem pós-simulação | Aceita — PoC aprovada no desktop |
 | [0011](0011-deploy-e-infraestrutura.md) | Deploy e infraestrutura de custo zero | Aceita |
+| [0012](0012-mesa-3d-e-estetica-ps1.md) | A mesa 3D: estética PS1, câmeras fixas, e o texto fora do 3D | Aceita |
 
 **0005 e 0006 são as decisões estruturantes.** Ambas nascem do mesmo fato: o sistema de
 RPG ainda não está documentado e vai mudar. As duas transformam "regra" e "formato de
