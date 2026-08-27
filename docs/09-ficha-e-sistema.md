@@ -1,6 +1,8 @@
 # 09 — Ficha e Sistema
 
-Extraído do PDF **"Paradoxo Epifânico - FICHA"** (9 páginas), recebido em 20/08/2026.
+Extraído do PDF **"Paradoxo Epifânico - FICHA"**. Recebido em 20/08/2026 com 9
+páginas; reenviado em 27/08/2026 com 51 — mesmo conteúdo de ficha, mais o catálogo
+de itens da §13 e a ambientação da §13.6. As páginas extras são arte.
 
 > Este documento substitui a lacuna que existia em [02 §4 e §5](02-regras-do-sistema.md).
 > Ele é a base do `sheet_template` v2 e do seed do banco.
@@ -361,3 +363,121 @@ mantém a tabela de quatro faixas confirmada em 19/08. → **Confirmar em S11.**
 | S7 | 🟡 | Aviso de conteúdo na entrada da mesa, pelos nomes de transtornos reais? |
 | S12 | 🟡 | Valores iniciais e máximos de Vida, Sanidade, Energia, Mana e Contato com o Oculto |
 | S13 | 🟡 | O que significam **MISS** e **KILL** no campo Afiliação? |
+
+---
+
+## 13. Catálogo de itens — ✅ *(PDF de 51 páginas, recebido em 27/08/2026)*
+
+O PDF entregue em 27/08 traz o mesmo conteúdo de ficha do anterior (de 9 páginas)
+e acrescenta o que faltava para o inventário: **um catálogo de itens com espaço
+ocupado e preço**. As páginas extras são arte.
+
+> ⚠️ **Os preços não estão aqui.** A coluna de valores saiu desalinhada das linhas
+> na extração de texto — o `TRANSTORNOS PSICOLÓGICOS`, que é cabeçalho, aparece com
+> preço, e a corda de 10 m sai mais cara que a lanterna. Transcrever isso seria
+> inventar número de economia. Os **espaços saíram limpos**, porque vêm dentro do
+> próprio nome do item. Ver **S14**.
+
+### 13.1 `PESO` no catálogo é `ESPAÇO` na ficha — ✅ resolve S8
+
+A ficha fala em espaços e o catálogo em peso, mas a escala bate exatamente com a
+tabela de tamanho de §8.1: espingarda 10, machado 8, machete 6, faca 4, caneta 1.
+São o mesmo número com dois nomes.
+
+**A exceção confirma a regra:** o escudo balístico é 40, muito além dos 8–10 de
+"muito grande". Ele não é item de mochila — é carregado na mão ou nas costas. Ver
+**S15**.
+
+### 13.2 Equipamentos
+
+| Grupo | Item | Espaços |
+|---|---|---|
+| Básicos | Corda (10 m) | 3 |
+| Básicos | Lanterna | 3 |
+| Básicos | Lanterna UV / luz negra | 3 |
+| Básicos | Walkie-talkie | 2 |
+| Básicos | Pano multiuso | 2 |
+| Básicos | Bíblia | 3 |
+| Básicos | Mapa | 2 |
+| Básicos | Bastão de caminhada | 8 |
+| Básicos | Lupa | 2 |
+| Básicos | Bloco de notas | 3 |
+| Básicos | Caneta azul · preta · vermelha | 1 cada |
+| Combate | Anel lâmina secreta | 1 |
+| Combate | Taser | 2 |
+| Combate | Mini faca | 3 |
+| Combate | Granada de mão | 3 |
+| Combate | Karambit · Faca tática | 4 |
+| Combate | Colete à prova de balas | 4 |
+| Combate | Machadinha | 5 |
+| Combate | Bomba molotov | 5 |
+| Combate | Munição diversa (30 und) | 5 |
+| Combate | Pistola Glock 17 (9 mm) | 5 |
+| Combate | Pistola Taurus PT 1911 (.45 ACP) | 5 |
+| Combate | Machete | 6 |
+| Combate | Pistola Desert Eagle (.50 AE) | 6 |
+| Combate | Revólver Magnum .44 | 6 |
+| Combate | Machado | 8 |
+| Combate | Rifle M4 Carbine (5.56 mm) | 8 |
+| Combate | Rifle AK-47 (7.62 mm) | 8 |
+| Combate | Shotgun | 9 |
+| Combate | Espingarda (12 gauge) | 10 |
+| Combate | **Escudo balístico** | **40** ⚠️ ver §13.1 |
+| Tech | Binóculos | 3 |
+| Tech | Notebook Dell | 4 |
+| Tech | Drone | 4 |
+| Tech | Maleta de ferramentas | 5 |
+| Tech | Serra elétrica | 8 |
+
+### 13.3 Remédios
+
+O catálogo dá **nome e preço, mas não espaço** — pela escala de §8.1, remédio é
+"pequeno (1 espaço)". Ver **S16**.
+
+- **Transtornos psicológicos:** Agomelatina (Valdoxan), Alprazolam (Frontal/Xanax),
+  Amitriptilina, Bupropiona (Wellbutrin), Clonazepam (Rivotril), Diazepam (Valium),
+  Fluoxetina (Prozac), Melatonina, Sertralina (Zoloft), Trazodona, Venlafaxina
+  (Efexor), Haloperidol (Haldol), Olanzapina (Zyprexa), Quetiapina (Seroquel),
+  Risperidona (Risperdal), Zolpidem (Stilnox)
+- **Doenças neurológicas e físicas:** Baclofeno, Dipirona, Gabapentina, Ibuprofeno,
+  Levodopa (Parkinson), Morfina sintética, Pregabalina (Lyrica), Tramadol, Codeína,
+  6-APB, Corticosteroides (Prednisona), Imunossupressores (Azatioprina)
+- **Infecções, ferimentos e suporte médico:** Amoxicilina, Ciprofloxacino, Vancomicina
+- **Medkit:** Kit de primeiros socorros, Kit medicina avançada
+
+### 13.4 Tratamentos — ✅ confirma §9.4
+
+| Tratamento | Custo | Cura |
+|---|---|---|
+| Leve | $ 100 CAD | `1d6` com vantagem |
+| Moderado | $ 200 CAD | `1d10` com vantagem |
+| Grave | $ 500 CAD | `1d20` com vantagem |
+
+O preço varia por Região. Os três usam **vantagem**, que continua sem definição
+mecânica — é o que torna **S10** bloqueante para o inventário, e não só para a
+rolagem.
+
+### 13.5 O catálogo de dados, confirmado
+
+O PDF lista textualmente: `d2 d3 d4 d6 d8 d10 d20 d30 d40 d50 d60 d70 d80 d90 d100`.
+São os 15 do [doc 03](03-catalogo-de-dados.md), e confirma que o d100 do dano é
+rolagem de valor, não o par percentual da ação.
+
+### 13.6 Ambientação — novo
+
+O PDF traz a história do mundo, que até agora não estava documentada em lugar
+nenhum e importa para a direção de arte: impacto de um meteoro em **Nunavut,
+Ártico canadense, em 2026**; nuvens cinzentas permanentes; colapso da internet e
+da comunicação global; criaturas chamadas **Kiev**; a **Organização Resiliência**,
+que é quem convoca os personagens. É o que justifica o `$ CAD` e o campo Afiliação.
+
+---
+
+## 14. Perguntas novas desta entrega
+
+| # | Prioridade | Pergunta |
+|---|---|---|
+| **S14** | 🔴 | Os **preços** do catálogo saíram desalinhados na extração. Preciso das páginas de Remédios e Equipamentos como imagem, ou de uma planilha |
+| **S15** | 🟠 | O escudo balístico (40) não cabe em mochila nenhuma. Existe slot de **equipado** separado do inventário? |
+| **S16** | 🟠 | Remédio ocupa 1 espaço cada, ou um frasco/caixa conta como um item só? |
+| **S17** | 🟡 | `CARGA MÁXIMA` da ficha sai de qual conta — Força, Resistência, valor fixo? |
