@@ -3,6 +3,7 @@ import { buildDiceGeometry, circumradius } from './geometry.js';
 import { labelFaces, splitPercentile } from './label.js';
 import { POLYHEDRA } from './polyhedra.js';
 import { readTrack, simulate, trayHalfFor, type DieTrack } from './simulate.js';
+import { createDiceMaterial, setDiceUniform, type DiceUniforms } from './material.js';
 import { buildNumberAtlas, ensureDiceFont } from './texture.js';
 
 /**
@@ -23,23 +24,6 @@ const STEP_MS = 1000 / 60;
 
 /** Direção de onde a câmera olha — precisa casar com `applyCamera`. */
 const VIEW_DIR = [0, 0.978, 0.208] as const;
-
-type DiceUniforms = {
-  uReveal: { value: number };
-  /** Brilho passageiro no instante em que o número surge. */
-  uFlash: { value: number };
-  /** Lado do atlas em células — o shader precisa dele para achar o centro da célula. */
-  uCols: { value: number };
-  /** Índice da face que assentou. As outras têm o número atenuado. */
-  uTopFace: { value: number };
-  uNumberMap: { value: THREE.Texture | null };
-};
-
-type UniformName = keyof DiceUniforms;
-
-type MaterialWithUniforms = THREE.MeshStandardMaterial & {
-  userData: { diceUniforms?: DiceUniforms };
-};
 
 export interface DieSpec {
   /** Id do catálogo: 'd4' | 'd6' | 'd8' | 'd10' | 'd20'. */
@@ -264,108 +248,11 @@ export class DiceRenderer {
     this.renderOnce();
   }
 
-  private makeMaterial(): THREE.MeshStandardMaterial {
-    const mat = new THREE.MeshStandardMaterial({
-      color: 0x241d33,
-      roughness: 0.28,
-      metalness: 0.32,
-      emissive: 0x8d10e0,
-      emissiveIntensity: 0.06,
-    });
-
-    // Sem isto o shader NÃO COMPILA e o dado some da tela — só a sombra
-    // aparece. O three.js só declara o varying `vUv` quando o material tem
-    // algum mapa; como a textura dos números entra por uniform próprio, é
-    // preciso pedir o varying explicitamente.
-    mat.defines = { ...(mat.defines ?? {}), USE_UV: '' };
-
-    // Uniforms mantidos AQUI, não dentro do shader.
-    //
-    // A versão anterior lia `userData.shader.uniforms` depois da compilação, e
-    // isso falhava de forma intermitente: com uma cacheKey de programa
-    // constante, o three.js reaproveita o programa já compilado e NÃO chama
-    // `onBeforeCompile` de novo. Do segundo dado em diante — e em toda rolagem
-    // após a primeira — a textura de números ficava nula e o dado saía em
-    // branco. Guardando a referência aos objetos de uniform, basta alterar
-    // `.value`, independentemente de o shader ter sido recompilado ou não.
-    const uniforms: DiceUniforms = {
-      uReveal: { value: 0 },
-      uFlash: { value: 0 },
-      uCols: { value: 1 },
-      uTopFace: { value: -1 },
-      uNumberMap: { value: null as THREE.Texture | null },
-    };
-    (mat as MaterialWithUniforms).userData.diceUniforms = uniforms;
-
-    // A revelação, no shader.
-    //
-    // Antes era só a opacidade do número subindo de 0 a 1 — lê como imagem
-    // carregando, não como resultado sendo revelado. Agora são três coisas ao
-    // mesmo tempo: o dígito CRESCE até assentar no tamanho certo, a opacidade
-    // entra atrás dele, e um brilho passa e some.
-    //
-    // A escala é feita amostrando a UV mais perto do centro da PRÓPRIA célula —
-    // por isso o `uCols`. O fator vai de 0,72 a 1,0, nunca acima: passar de 1
-    // sairia da célula e puxaria o número da face vizinha para dentro desta.
-    mat.onBeforeCompile = (shader) => {
-      shader.uniforms.uReveal = uniforms.uReveal;
-      shader.uniforms.uFlash = uniforms.uFlash;
-      shader.uniforms.uCols = uniforms.uCols;
-      shader.uniforms.uTopFace = uniforms.uTopFace;
-      shader.uniforms.uNumberMap = uniforms.uNumberMap;
-      shader.fragmentShader = shader.fragmentShader
-        .replace(
-          '#include <common>',
-          `#include <common>
-           uniform float uReveal;
-           uniform float uFlash;
-           uniform float uCols;
-           uniform float uTopFace;
-           uniform sampler2D uNumberMap;`,
-        )
-        .replace(
-          '#include <emissivemap_fragment>',
-          `#include <emissivemap_fragment>
-           vec2 cellIdx = floor(vUv * uCols);
-           vec2 cellCenter = (cellIdx + 0.5) / uCols;
-           float grow = mix(0.72, 1.0, uReveal);
-           vec2 numUv = cellCenter + (vUv - cellCenter) * grow;
-           vec4 numTex = texture2D(uNumberMap, numUv);
-
-           // Qual face é esta célula. A linha é invertida porque a textura tem
-           // flipY — a mesma inversão que a UV faz em geometry.ts.
-           float faceIdx = (uCols - 1.0 - cellIdx.y) * uCols + cellIdx.x;
-           // uTopFace < 0 significa "não atenue nada": é o caso do d4, cujo
-           // destaque já vem resolvido no atlas, canto a canto.
-           float isTop = max(step(uTopFace, -0.5), step(abs(faceIdx - uTopFace), 0.5));
-
-           // As outras faces ficam com o número fantasma. Um dado real também
-           // tem número nos lados, mas eles não competem com o de cima; aqui
-           // competiam, e não dava para saber qual era o resultado.
-           float a = numTex.a * uReveal * mix(0.26, 1.0, isTop);
-           diffuseColor.rgb = mix(diffuseColor.rgb, numTex.rgb, a);
-           totalEmissiveRadiance += numTex.rgb * a * isTop * (0.35 + uFlash * 2.4);`,
-        );
-    };
-    // Sem customProgramCacheKey: o three.js chama onBeforeCompile ANTES de
-    // decidir se reaproveita o programa, então os uniforms são sempre ligados.
-    // Uma chave constante fazia o hook ser pulado; uma chave única forçava
-    // recompilação desnecessária.
-    return mat;
-  }
-
-  private setUniform(mat: THREE.MeshStandardMaterial, name: UniformName, value: unknown): void {
-    const u = (mat as MaterialWithUniforms).userData.diceUniforms;
-    if (!u) return;
-    if (name === 'uNumberMap') u.uNumberMap.value = value as THREE.Texture | null;
-    else u[name].value = value as number;
-  }
-
   private clearDice(): void {
     for (const d of this.dice) {
       this.group.remove(d.mesh);
       d.mesh.geometry.dispose();
-      const map = (d.material as MaterialWithUniforms).userData.diceUniforms?.uNumberMap.value;
+      const map = (d.material.userData as { diceUniforms?: DiceUniforms }).diceUniforms?.uNumberMap.value;
       map?.dispose();
       d.material.dispose();
     }
@@ -427,19 +314,19 @@ export class DiceRenderer {
         ...(numberOnlyTopFace && !isD4 ? { onlyFace: sim.topFaces[i]! } : {}),
       });
 
-      const material = this.makeMaterial();
+      const material = createDiceMaterial();
       const mesh = new THREE.Mesh(geometry, material);
       mesh.castShadow = true;
       mesh.receiveShadow = true;
       this.group.add(mesh);
 
-      this.setUniform(material, 'uNumberMap', atlas);
-      this.setUniform(material, 'uCols', cols);
+      setDiceUniform(material, 'uNumberMap', atlas);
+      setDiceUniform(material, 'uCols', cols);
       // −1 desliga a atenuação no shader: no d4 o destaque do canto do topo já
       // está pintado no atlas, e atenuar de novo apagaria o resultado junto.
-      this.setUniform(material, 'uTopFace', isD4 ? -1 : sim.topFaces[i]!);
-      this.setUniform(material, 'uReveal', 0);
-      this.setUniform(material, 'uFlash', 0);
+      setDiceUniform(material, 'uTopFace', isD4 ? -1 : sim.topFaces[i]!);
+      setDiceUniform(material, 'uReveal', 0);
+      setDiceUniform(material, 'uFlash', 0);
 
       const track = sim.frames[i]!;
       readTrack(track, 0, mesh.position, mesh.quaternion);
@@ -575,8 +462,8 @@ export class DiceRenderer {
   private revealNumbers(beatMs = 140, fadeMs = 420): Promise<void> {
     const done = () => {
       for (const d of this.dice) {
-        this.setUniform(d.material, 'uReveal', 1);
-        this.setUniform(d.material, 'uFlash', 0);
+        setDiceUniform(d.material, 'uReveal', 1);
+        setDiceUniform(d.material, 'uFlash', 0);
       }
     };
 
@@ -606,10 +493,10 @@ export class DiceRenderer {
             const local = (t - beatMs - i * stagger) / fadeMs;
             const raw = Math.min(1, Math.max(0, local));
             // easeOutCubic: rápido no começo, assentando no fim.
-            this.setUniform(d.material, 'uReveal', 1 - Math.pow(1 - raw, 3));
+            setDiceUniform(d.material, 'uReveal', 1 - Math.pow(1 - raw, 3));
             // Envelope do brilho: sobe, passa pelo pico no meio e volta a zero.
             // Zerar no fim importa — um resíduo deixaria o número lavado.
-            this.setUniform(
+            setDiceUniform(
               d.material,
               'uFlash',
               raw > 0 && raw < 1 ? Math.pow(Math.sin(Math.PI * raw), 1.5) : 0,
@@ -676,7 +563,7 @@ export class DiceRenderer {
    */
   inspectLegibility(): { numberPixels: number; contrast: number; ratioOfDie: number } {
     const grab = (reveal: number) => {
-      for (const d of this.dice) this.setUniform(d.material, 'uReveal', reveal);
+      for (const d of this.dice) setDiceUniform(d.material, 'uReveal', reveal);
       this.renderOnce();
       const gl = this.renderer.getContext();
       const w = gl.drawingBufferWidth;
@@ -745,7 +632,8 @@ export class DiceRenderer {
 
   /** PNG do atlas de números do primeiro dado — para inspeção visual. */
   atlasSnapshot(): string | null {
-    const u = (this.dice[0]?.material as MaterialWithUniforms | undefined)?.userData.diceUniforms;
+    const u = (this.dice[0]?.material.userData as { diceUniforms?: DiceUniforms } | undefined)
+      ?.diceUniforms;
     const tex = u?.uNumberMap.value as THREE.CanvasTexture | null | undefined;
     const img = tex?.image as HTMLCanvasElement | undefined;
     return img?.toDataURL('image/png') ?? null;
@@ -760,8 +648,8 @@ export class DiceRenderer {
     cancelAnimationFrame(this.raf);
     for (const d of this.dice) {
       readTrack(d.track, d.track.steps - 1, d.mesh.position, d.mesh.quaternion);
-      this.setUniform(d.material, 'uReveal', 1);
-      this.setUniform(d.material, 'uFlash', 0);
+      setDiceUniform(d.material, 'uReveal', 1);
+      setDiceUniform(d.material, 'uFlash', 0);
     }
     this.renderOnce();
     this.abortAnimation?.();

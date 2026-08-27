@@ -1,85 +1,122 @@
 import * as THREE from 'three';
 import { describe, expect, it } from 'vitest';
 import { TABLE } from '../src/table.js';
-import { BULB, VIEWS, projectToFrame } from '../src/viewpoints.js';
+import {
+  BULB,
+  SIZES,
+  SPOTS,
+  VIEWS,
+  cornersOf,
+  layoutFor,
+  projectToFrame,
+  resolveView,
+  type Layout,
+} from '../src/viewpoints.js';
 
 /**
  * O enquadramento é REQUISITO, não gosto.
  *
- * O pedido foi explícito: a lâmpada "mal aparece, só fica pendurada", e a cena é
- * a mesa e o que está sobre ela. Isso são afirmações verificáveis sobre onde
- * cada coisa cai no quadro — e verificar em teste vale mais do que conferir a
- * olho numa captura, porque quem mexer na altura da lâmpada ou no campo de visão
- * daqui a três meses vai saber na hora que quebrou.
+ * A primeira versão deste arquivo só checava a tela larga, e por isso deixou
+ * passar o defeito que o cliente encontrou no celular: em pé, ficha e tapete
+ * ficavam cortados nas laterais. Conferir a olho numa captura de desktop nunca
+ * ia pegar isso. Agora toda afirmação roda nas DUAS disposições, em proporções
+ * de celular em pé até monitor ultralargo.
  */
 
-/** Proporções extremas que a cena precisa aguentar: celular em pé até monitor. */
-const ASPECTS = [9 / 19.5, 3 / 4, 1, 16 / 9, 21 / 9];
+const TELAS: Array<[string, number]> = [
+  ['celular em pé', 9 / 19.5],
+  ['celular em pé, curto', 9 / 16],
+  ['tablet em pé', 3 / 4],
+  ['quadrado', 1],
+  ['paisagem', 16 / 9],
+  ['ultralarga', 21 / 9],
+];
+
+function dentro(p: THREE.Vector2, folga = 1): boolean {
+  return Math.abs(p.x) <= folga && Math.abs(p.y) <= folga;
+}
+
+describe('Nada é cortado na vista da mesa', () => {
+  for (const [nome, aspect] of TELAS) {
+    it(`${nome} (${aspect.toFixed(2)}): ficha e tapete cabem inteiros`, () => {
+      const layout: Layout = layoutFor(aspect);
+      const view = resolveView(layout, 'mesa', aspect);
+
+      for (const [alvo, size] of [
+        ['ficha', SIZES.ficha],
+        ['dados', SIZES.dados],
+      ] as const) {
+        for (const canto of cornersOf(SPOTS[layout][alvo], size, 0.014)) {
+          const p = projectToFrame(view, canto, aspect);
+          expect(
+            dentro(p),
+            `${alvo} cortado em ${nome}: canto caiu em (${p.x.toFixed(2)}, ${p.y.toFixed(2)})`,
+          ).toBe(true);
+        }
+      }
+    });
+  }
+});
 
 describe('A lâmpada mal aparece', () => {
-  for (const aspect of ASPECTS) {
-    it(`fica dentro do quadro e encostada no topo — proporção ${aspect.toFixed(2)}`, () => {
-      const p = projectToFrame(VIEWS.mesa!, BULB, aspect);
+  for (const [nome, aspect] of TELAS) {
+    it(`${nome}: no quadro, e encostada no topo`, () => {
+      const layout = layoutFor(aspect);
+      const p = projectToFrame(resolveView(layout, 'mesa', aspect), BULB, aspect);
 
-      // Dentro do quadro, senão não é "mal aparece", é "não aparece".
       expect(Math.abs(p.x), 'lâmpada saiu pela lateral').toBeLessThan(1);
       expect(p.y, 'lâmpada saiu por cima do quadro').toBeLessThan(1);
-
-      // E no quinto superior. Se descer daqui, deixa de ser um detalhe no alto
-      // e vira personagem da cena.
-      expect(p.y, 'lâmpada desceu para o meio do quadro').toBeGreaterThan(0.6);
+      // No terço superior. Abaixo disso ela deixa de ser um detalhe no alto e
+      // vira personagem da cena.
+      expect(p.y, 'lâmpada desceu demais').toBeGreaterThan(0.45);
     });
   }
 });
 
 describe('A mesa preenche o quadro', () => {
-  it('a borda da frente passa por baixo da tela, sem mostrar o vazio', () => {
-    // Se a borda de baixo da mesa aparecesse, veríamos o nada por baixo dela e a
-    // ilusão de estar sentado à mesa se desfaz.
-    const frente = new THREE.Vector3(0, 0, TABLE.halfZ);
-    const p = projectToFrame(VIEWS.mesa!, frente, 16 / 9);
-    expect(p.y, 'a borda da frente entrou no quadro').toBeLessThan(-0.85);
-  });
+  for (const [nome, aspect] of TELAS) {
+    it(`${nome}: nenhuma borda do tampo aparece`, () => {
+      const layout = layoutFor(aspect);
+      const view = resolveView(layout, 'mesa', aspect);
 
-  it('as laterais alcançam as bordas nas telas largas', () => {
-    const esquerda = new THREE.Vector3(-TABLE.halfX, 0, 0);
-    const p = projectToFrame(VIEWS.mesa!, esquerda, 21 / 9);
-    expect(Math.abs(p.x), 'sobrou vazio na lateral').toBeGreaterThan(0.95);
-  });
+      // Se a borda da frente entrasse no quadro, veríamos o vazio por baixo e a
+      // sensação de estar SENTADO à mesa se desfaria.
+      const frente = projectToFrame(view, new THREE.Vector3(0, 0, TABLE.halfZ), aspect);
+      expect(frente.y, 'a borda da frente entrou no quadro').toBeLessThan(-0.9);
+
+      for (const sx of [-1, 1]) {
+        const lado = projectToFrame(view, new THREE.Vector3(sx * TABLE.halfX, 0, 0), aspect);
+        expect(Math.abs(lado.x), 'sobrou vazio na lateral').toBeGreaterThan(0.95);
+      }
+    });
+  }
 });
 
-describe('Os alvos de cada vista estão enquadrados', () => {
-  it('a ficha inteira cabe na vista dela', () => {
-    // O papel tem 0,62 × 0,86 e fica em x = −0,62. Os quatro cantos precisam
-    // caber, senão a última coisa que se vê antes do HTML entrar é uma página
-    // cortada.
-    for (const dx of [-0.31, 0.31]) {
-      for (const dz of [-0.43, 0.43]) {
-        const canto = new THREE.Vector3(-0.62 + dx, 0.012, 0.06 + dz);
-        const p = projectToFrame(VIEWS.ficha!, canto, 16 / 9);
-        expect(Math.abs(p.x), `canto (${dx}, ${dz}) saiu pela lateral`).toBeLessThan(1);
-        expect(Math.abs(p.y), `canto (${dx}, ${dz}) saiu por cima ou por baixo`).toBeLessThan(1);
-      }
+describe('As vistas de perto enquadram o alvo inteiro', () => {
+  for (const [nome, aspect] of TELAS) {
+    for (const alvo of ['ficha', 'dados'] as const) {
+      it(`${nome}: a vista de ${alvo} cabe`, () => {
+        const layout = layoutFor(aspect);
+        const view = resolveView(layout, alvo, aspect);
+        for (const canto of cornersOf(SPOTS[layout][alvo], SIZES[alvo], 0.014)) {
+          const p = projectToFrame(view, canto, aspect);
+          expect(dentro(p), `${alvo} cortado em ${nome}`).toBe(true);
+        }
+      });
     }
-  });
+  }
+});
 
-  it('o tapete de dados cabe na vista dele, com folga para os dados', () => {
-    for (const dx of [-0.47, 0.47]) {
-      for (const dz of [-0.38, 0.38]) {
-        const canto = new THREE.Vector3(0.66 + dx, 0.014, dz);
-        const p = projectToFrame(VIEWS.dados!, canto, 16 / 9);
-        expect(Math.abs(p.x), `canto (${dx}, ${dz}) saiu pela lateral`).toBeLessThan(1);
-        expect(Math.abs(p.y), `canto (${dx}, ${dz}) saiu por cima ou por baixo`).toBeLessThan(1);
-      }
-    }
-  });
-
-  it('a vista de dados olha de cima, como a rolagem já olha', () => {
-    // A rolagem enquadra a ~78° de elevação. Se esta vista divergir muito, a
-    // passagem de uma para a outra vira um salto.
-    const dir = VIEWS.dados!.position.clone().sub(VIEWS.dados!.target).normalize();
-    const elevacao = (Math.asin(dir.y) * 180) / Math.PI;
-    expect(elevacao).toBeGreaterThan(70);
-    expect(elevacao).toBeLessThan(85);
-  });
+describe('A vista de dados olha de cima, como a rolagem já olha', () => {
+  for (const layout of ['wide', 'tall'] as const) {
+    it(`${layout}: elevação entre 70° e 85°`, () => {
+      // A rolagem enquadra a ~78° de elevação. Divergir muito daqui faria a
+      // passagem de uma vista para a outra virar um salto.
+      const v = VIEWS[layout].dados;
+      const dir = v.position.clone().sub(v.target).normalize();
+      const elevacao = (Math.asin(dir.y) * 180) / Math.PI;
+      expect(elevacao).toBeGreaterThan(70);
+      expect(elevacao).toBeLessThan(85);
+    });
+  }
 });

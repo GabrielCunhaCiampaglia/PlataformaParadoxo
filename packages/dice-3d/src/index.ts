@@ -5,6 +5,8 @@ export type { SimResult, SimOptions, DieTrack, Degeneracy } from './simulate.js'
 export { labelFaces, readTopValue, faceValuesFor, splitPercentile, joinPercentile } from './label.js';
 export type { LabelOptions } from './label.js';
 export { buildDiceGeometry, circumradius } from './geometry.js';
-export { buildNumberAtlas } from './texture.js';
+export { buildNumberAtlas, ensureDiceFont } from './texture.js';
 export { DiceRenderer, percentileDice } from './renderer.js';
+export { applyDiceNumbering, setDiceUniform, createDiceMaterial } from './material.js';
+export type { DiceUniforms, UniformName } from './material.js';
 export type { DieSpec, RollOptions, RendererDiagnostics } from './renderer.js';

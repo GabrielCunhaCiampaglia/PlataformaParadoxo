@@ -2,7 +2,7 @@ import { POLYHEDRA, buildDiceGeometry, circumradius } from '@paradoxo/dice-3d';
 import * as THREE from 'three';
 import { applyPS1 } from './ps1.js';
 import { matTexture, metalTexture, paperTexture, woodTexture } from './textures.js';
-import { BULB } from './viewpoints.js';
+import { BULB, SPOTS, type Layout } from './viewpoints.js';
 
 /**
  * A mesa e o que está sobre ela.
@@ -27,6 +27,13 @@ export interface TableParts {
   bulb: THREE.Mesh;
   /** Dados em repouso sobre o tapete — a última rolagem que ficou na mesa. */
   dice: THREE.Group;
+  /**
+   * Reposiciona o que está sobre a mesa para a disposição pedida.
+   *
+   * Em tela larga, ficha e tapete ficam lado a lado; num celular em pé, um atrás
+   * do outro. Ver `viewpoints.ts` para o porquê.
+   */
+  setLayout(layout: Layout): void;
   dispose(): void;
 }
 
@@ -135,13 +142,13 @@ export function buildTable(): TableParts {
   sheet.rotation.x = -Math.PI / 2;
   // Levemente torta: papel largado na mesa não fica alinhado com a borda.
   sheet.rotation.z = 0.08;
-  sheet.position.set(-0.62, 0.012, 0.06);
+  sheet.position.y = 0.012;
   sheet.name = 'ficha';
   root.add(sheet);
   pickable.set('ficha', sheet);
 
   const paperShadow = contactShadow(0.78, 1.0);
-  paperShadow.position.set(-0.62, 0.004, 0.08);
+  paperShadow.position.y = 0.004;
   root.add(paperShadow);
 
   // --- tapete de dados ---
@@ -153,13 +160,13 @@ export function buildTable(): TableParts {
   const matGeo = track(new THREE.BoxGeometry(0.94, 0.012, 0.76, 4, 1, 3));
   const matMat = track(lambert(mat));
   const diceMat = new THREE.Mesh(matGeo, matMat);
-  diceMat.position.set(0.66, 0.014, 0.0);
+  diceMat.position.y = 0.014;
   diceMat.name = 'dados';
   root.add(diceMat);
   pickable.set('dados', diceMat);
 
   const matShadow = contactShadow(1.15, 0.98);
-  matShadow.position.set(0.66, 0.004, 0.02);
+  matShadow.position.y = 0.004;
   root.add(matShadow);
 
   // --- dados em repouso ---
@@ -175,9 +182,9 @@ export function buildTable(): TableParts {
   // carregamento, senão o jogador vê os dados pularem de lugar ao voltar.
   const resting: Array<[string, number, number, number, number]> = [
     // id, x, z, giro, inclinação
-    ['d20', 0.5, -0.17, 0.9, 0.05],
-    ['d6', 0.79, 0.11, 0.32, 0.0],
-    ['d10', 0.61, 0.21, 2.1, 0.03],
+    ['d20', -0.16, -0.17, 0.9, 0.05],
+    ['d6', 0.13, 0.11, 0.32, 0.0],
+    ['d10', -0.05, 0.21, 2.1, 0.03],
   ];
 
   for (const [id, x, z, spin, tilt] of resting) {
@@ -202,6 +209,22 @@ export function buildTable(): TableParts {
     lamp,
     bulb,
     dice,
+    setLayout(layout: Layout) {
+      const f = SPOTS[layout].ficha;
+      const d = SPOTS[layout].dados;
+      sheet.position.x = f.x;
+      sheet.position.z = f.y;
+      paperShadow.position.x = f.x;
+      paperShadow.position.z = f.y + 0.02;
+      diceMat.position.x = d.x;
+      diceMat.position.z = d.y;
+      matShadow.position.x = d.x;
+      matShadow.position.z = d.y + 0.02;
+      // O grupo carrega os dados junto com o tapete: eles ficam em coordenadas
+      // do tapete, não do mundo, e por isso não escorregam ao trocar a
+      // disposição.
+      dice.position.set(d.x, 0, d.y);
+    },
     dispose() {
       for (const d of disposables) d.dispose();
     },

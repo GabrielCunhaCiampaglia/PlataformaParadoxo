@@ -10,16 +10,28 @@ import * as THREE from 'three';
  *  |---------------------------------|-----------------------------------|
  *  | PBR por fragmento               | Lambert, uma luz                  |
  *  | shadow map 1024² todo quadro    | nenhuma sombra dinâmica           |
- *  | texturas de MB                  | 128 px desenhados em canvas       |
- *  | renderiza a 1,75× o dpr         | renderiza a 320×240 e amplia      |
+ *  | texturas de MB                  | 256 px desenhados em canvas       |
+ *  | renderiza a 1,75× o dpr         | renderiza a 640 no lado maior     |
  *
- * A última linha é a que decide: o custo de fragmento cai entre 5 e 10 vezes,
- * conforme o tamanho da tela. E o serrilhado que sobra não é defeito a esconder,
- * é o efeito pedido.
+ * A última linha é a que decide: o custo de fragmento cai ~4×.
+ *
+ * A referência é N64, não PS1 — a primeira versão em 320×240 saiu pixelada demais.
+ * O que muda com isso: mais resolução, textura FILTRADA em vez de serrilhada, e
+ * quantização de cor mais leve. O jitter de vértice fica, mas fino.
  */
 
-/** Resolução interna. 320×240 era a saída típica do console. */
-export const INTERNAL_HEIGHT = 240;
+/**
+ * Resolução interna: 640 no lado MAIOR.
+ *
+ * A primeira versão fixava a ALTURA em 240, à la PS1. Ficou pixelado demais, e
+ * fixar a altura ainda tinha um segundo defeito: num celular em pé, 240 de
+ * altura dá 110 de largura, e a imagem virava sopa. Limitando o lado maior, o
+ * orçamento de pixels é o mesmo deitado ou em pé.
+ *
+ * 640 é a saída da referência — N64, não PS1. Numa tela de 1280×720 são 230 mil
+ * pixels contra 921 mil nativos: ainda 4× menos trabalho de fragmento.
+ */
+export const INTERNAL_LONG = 640;
 
 /**
  * Trava os vértices numa grade, em espaço de tela.
@@ -30,8 +42,12 @@ export const INTERNAL_HEIGHT = 240;
  *
  * Cabe em três linhas de vertex shader e não custa nada.
  */
-export function applyPS1(material: THREE.Material, jitter = 160): void {
-  material.onBeforeCompile = (shader) => {
+export function applyPS1(material: THREE.Material, jitter = 320): void {
+  // ENCADEIA. Ver o comentário gêmeo em `material.ts` do dice-3d: atribuir
+  // direto apagaria o shader de numeração dos dados, sem erro nenhum.
+  const anterior = material.onBeforeCompile;
+  material.onBeforeCompile = (shader, renderer) => {
+    anterior?.call(material, shader, renderer);
     shader.uniforms.uJitter = { value: jitter };
     shader.vertexShader = shader.vertexShader
       .replace('#include <common>', '#include <common>\n uniform float uJitter;')
@@ -69,10 +85,10 @@ const COMPOSITE_FRAGMENT = /* glsl */ `
   void main() {
     vec3 c = texture2D(uScene, vUv).rgb;
 
-    // Cor de 15 bits: 32 níveis por canal, como o framebuffer do console. Sem o
-    // dither, o degradê da luz sobre a mesa vira faixa lisa; com ele, vira o
-    // chuvisco de pontos que a memória associa àquela época.
-    float levels = 32.0;
+    // Quantização de cor, mas mais leve que a de 15 bits do PS1: 64 níveis por
+    // canal em vez de 32. A referência do cliente é N64, onde o degradê é mais
+    // limpo — com 32 níveis o chuvisco do dither competia com a textura.
+    float levels = 64.0;
     c += bayer(gl_FragCoord.xy) / levels;
     c = floor(c * levels + 0.5) / levels;
 
@@ -93,7 +109,7 @@ export class RetroPipeline {
   private readonly material: THREE.ShaderMaterial;
 
   constructor(private readonly renderer: THREE.WebGLRenderer) {
-    this.target = new THREE.WebGLRenderTarget(320, INTERNAL_HEIGHT, {
+    this.target = new THREE.WebGLRenderTarget(640, 360, {
       minFilter: THREE.NearestFilter,
       magFilter: THREE.NearestFilter,
       depthBuffer: true,
@@ -106,7 +122,7 @@ export class RetroPipeline {
     this.material = new THREE.ShaderMaterial({
       uniforms: {
         uScene: { value: this.target.texture },
-        uOutputSize: { value: new THREE.Vector2(320, INTERNAL_HEIGHT) },
+        uOutputSize: { value: new THREE.Vector2(640, 360) },
       },
       vertexShader: /* glsl */ `
         varying vec2 vUv;
@@ -124,9 +140,11 @@ export class RetroPipeline {
 
   /** Redimensiona o alvo interno mantendo a proporção da tela. */
   resize(cssWidth: number, cssHeight: number): void {
-    const aspect = cssWidth / Math.max(1, cssHeight);
-    const h = INTERNAL_HEIGHT;
-    const w = Math.max(160, Math.round(h * aspect));
+    const w0 = Math.max(1, cssWidth);
+    const h0 = Math.max(1, cssHeight);
+    const k = INTERNAL_LONG / Math.max(w0, h0);
+    const w = Math.max(200, Math.round(w0 * k));
+    const h = Math.max(200, Math.round(h0 * k));
     this.target.setSize(w, h);
     this.material.uniforms.uOutputSize!.value.set(w, h);
   }

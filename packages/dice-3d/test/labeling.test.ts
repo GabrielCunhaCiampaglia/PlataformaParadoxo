@@ -259,6 +259,39 @@ describe('Simulação headless', () => {
     expect(Math.hypot(q[0]!, q[1]!, q[2]!, q[3]!)).toBeCloseTo(1, 4);
   });
 
+  /**
+   * REGRESSÃO — a gravação tem de conter todos os passos que ela diz ter.
+   *
+   * O buffer é alocado para o caso comum e cresce sob demanda. Quando ele
+   * crescia só na cutucada, uma rolagem que passasse de 300 passos por conta
+   * própria escrevia fora do Float32Array em silêncio: a gravação anunciava 312
+   * passos com dados para 300, ler o último devolvia `undefined`, a posição
+   * virava NaN e o dado sumia da tela. Nada disso levantava erro.
+   */
+  it('a gravação nunca promete mais passos do que tem', () => {
+    let longas = 0;
+    for (let i = 0; i < 60; i++) {
+      const r = simulate({ dice: Array(6).fill('d6'), seed: 20_000 + i, record: true });
+      if (!r.ok) continue;
+      if (r.steps > 300) longas++;
+
+      for (const t of r.frames) {
+        expect(t.data.length, `semente ${20_000 + i}: buffer menor que os passos`).toBe(t.steps * 7);
+
+        const o = (t.steps - 1) * 7;
+        for (let k = 0; k < 7; k++) {
+          expect(
+            Number.isFinite(t.data[o + k]),
+            `semente ${20_000 + i}: último passo tem valor inválido`,
+          ).toBe(true);
+        }
+      }
+    }
+    // Se nenhuma rolagem passasse de 300 passos, o teste não estaria exercendo
+    // o caso que ele existe para pegar.
+    expect(longas, 'nenhuma rolagem longa na amostra — o teste virou decorativo').toBeGreaterThan(0);
+  }, 60_000);
+
   it('não aloca gravação quando record está desligado', () => {
     expect(simulate({ dice: ['d6'], seed: 77 }).frames).toEqual([]);
   });

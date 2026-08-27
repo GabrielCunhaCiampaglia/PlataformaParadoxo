@@ -535,3 +535,94 @@ select:focus-visible {
   line-height: 1.6;
   color: #5a4c36;
 }
+
+/* Botão de fechar dentro da ficha. O "← Mesa" some quando a ficha está aberta:
+   antes ele ficava embaixo do overlay e o toque não chegava nele. */
+.mesa-fechar {
+  margin-top: 18px;
+  padding: 10px 18px;
+  font-family: var(--mono);
+  font-size: 11px;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: #2b2318;
+  background: transparent;
+  border: 1px solid rgba(43, 35, 24, 0.4);
+  border-radius: 2px;
+  cursor: pointer;
+}
+
+.mesa-fechar:hover {
+  background: rgba(43, 35, 24, 0.08);
+}
+
+/* Controles da rolagem, sobre o tapete. */
+.mesa-dados {
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  padding: 16px 16px calc(16px + env(safe-area-inset-bottom));
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 12px;
+  background: linear-gradient(180deg, transparent, rgba(3, 2, 1, 0.85) 55%);
+}
+
+.mesa-total {
+  margin: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 2px;
+  font-family: var(--sans);
+  font-weight: 800;
+  font-size: 44px;
+  line-height: 1;
+  color: #ffe6bd;
+  text-shadow: 0 0 24px rgba(255, 180, 92, 0.45);
+}
+
+.mesa-parcelas {
+  font-family: var(--mono);
+  font-weight: 400;
+  font-size: 11px;
+  letter-spacing: 0.12em;
+  color: rgba(255, 220, 170, 0.5);
+}
+
+.mesa-controles {
+  display: flex;
+  gap: 8px;
+  align-items: stretch;
+}
+
+.mesa-select,
+.mesa-rolar {
+  font-family: var(--mono);
+  font-size: 12px;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  padding: 11px 14px;
+  border-radius: 2px;
+  border: 1px solid rgba(255, 220, 170, 0.22);
+  background: rgba(0, 0, 0, 0.6);
+  color: rgba(255, 220, 170, 0.85);
+  cursor: pointer;
+  /* Alvo de toque confortável no celular. */
+  min-height: 44px;
+}
+
+.mesa-rolar {
+  background: rgba(141, 16, 224, 0.28);
+  border-color: rgba(200, 120, 255, 0.45);
+  color: #ffe6bd;
+  font-weight: 700;
+  padding-inline: 26px;
+}
+
+.mesa-rolar:disabled {
+  opacity: 0.55;
+  cursor: default;
+}

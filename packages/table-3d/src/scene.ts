@@ -1,7 +1,17 @@
 import * as THREE from 'three';
+import type { DieSpec } from '@paradoxo/dice-3d';
+import { DiceOnTable, type TableRollResult } from './dice-on-table.js';
 import { RetroPipeline } from './ps1.js';
 import { buildTable, type Hotspot, type TableParts } from './table.js';
-import { BULB, VIEWS, type ViewName, type Viewpoint } from './viewpoints.js';
+import {
+  BULB,
+  SPOTS,
+  layoutFor,
+  resolveView,
+  type Layout,
+  type ViewName,
+  type Viewpoint,
+} from './viewpoints.js';
 
 /**
  * A cena da mesa.
@@ -12,8 +22,13 @@ import { BULB, VIEWS, type ViewName, type Viewpoint } from './viewpoints.js';
  *  1. navegar em primeira pessoa no toque é desconfortável;
  *  2. enquadramento fixo é a linguagem do survival horror da época, então a
  *     restrição vira estilo em vez de parecer limitação;
- *  3. a cena só precisa desenhar ENQUANTO a câmera se move. Parada, o último
- *     quadro serve. É a diferença entre horas de GPU e segundos numa sessão.
+ *  3. o custo de desenhar cai muito: sem navegação livre, a cena é sempre uma
+ *     de três, e o alvo interno pode ser pequeno.
+ *
+ * O laço roda continuamente enquanto a mesa está à vista — a lâmpada oscila, e
+ * mesa parada lê como foto. Ele PARA nos dois lugares onde o jogador realmente
+ * fica: com a ficha aberta e com a aba em segundo plano. Ver o comentário no
+ * fim de `tick`.
  */
 
 export interface SceneOptions {
@@ -32,10 +47,13 @@ export class TableScene {
   private readonly raycaster = new THREE.Raycaster();
 
   private view: ViewName = 'mesa';
+  private layout: Layout = 'wide';
+  private aspect = 1;
   private raf = 0;
   private disposed = false;
   private paused = false;
   private lastFrame = 0;
+  private readonly rolling = new DiceOnTable();
 
   /** Transição em curso, se houver. */
   private tween: {
@@ -54,8 +72,8 @@ export class TableScene {
     private readonly opts: SceneOptions = {},
   ) {
     this.renderer = new THREE.WebGLRenderer({ canvas, antialias: false });
-    // Pixel ratio 1, sempre. Ampliar 320×240 com NEAREST já define a imagem;
-    // desenhar o quad final em 2× ou 3× só gastaria fragmento à toa.
+    // Pixel ratio 1, sempre. A imagem já é definida pelo alvo interno; desenhar
+    // o quad final em 2× ou 3× do dpr só gastaria fragmento à toa.
     this.renderer.setPixelRatio(1);
     this.renderer.setClearColor(0x000000, 1);
 
@@ -65,7 +83,15 @@ export class TableScene {
     this.scene.background = new THREE.Color(0x000000);
 
     this.parts = buildTable();
+    // `buildTable` monta a mesa sem escolher disposição; sem esta chamada, a
+    // ficha e o tapete ficariam na origem, empilhados um sobre o outro.
+    this.parts.setLayout(this.layout);
     this.scene.add(this.parts.root);
+    // Os dados da rolagem vivem num grupo próprio, sobre o tapete. Os dados
+    // estáticos que a mesa monta são só o estado inicial — somem na primeira
+    // rolagem de verdade.
+    this.parts.root.add(this.rolling.group);
+    this.placeRolling();
     this.baseIntensity = this.parts.lamp.intensity;
 
     // Ambiente quase nulo. O pouco que há existe só para o que está fora do
@@ -73,12 +99,16 @@ export class TableScene {
     // queda de luz, não por corte.
     this.scene.add(new THREE.AmbientLight(0x1e1626, 0.35));
 
-    this.applyView(VIEWS[this.view]);
+    this.applyView(this.viewpoint(this.view));
     this.resize();
     this.start();
   }
 
   // --- enquadramento ---
+
+  private viewpoint(name: ViewName): Viewpoint {
+    return resolveView(this.layout, name, this.aspect);
+  }
 
   private applyView(v: Viewpoint): void {
     this.camera.position.copy(v.position);
@@ -97,7 +127,7 @@ export class TableScene {
         target: this.target.clone(),
         fov: this.camera.fov,
       },
-      to: VIEWS[view],
+      to: this.viewpoint(view),
       started: performance.now(),
       ms,
       view,
@@ -115,7 +145,7 @@ export class TableScene {
   jumpTo(view: ViewName): void {
     this.tween = null;
     this.view = view;
-    this.applyView(VIEWS[view]);
+    this.applyView(this.viewpoint(view));
     this.wake();
   }
 
@@ -170,9 +200,52 @@ export class TableScene {
     this.raf = requestAnimationFrame(this.tick);
   }
 
+  /** Aba em segundo plano não desenha — e `rAF` nem dispararia. */
+  private readonly onVisibility = () => {
+    if (document.hidden) {
+      cancelAnimationFrame(this.raf);
+      this.raf = 0;
+    } else {
+      this.wake();
+    }
+  };
+
   private start(): void {
     this.canvas.addEventListener('pointerdown', this.onPointerDown);
+    document.addEventListener('visibilitychange', this.onVisibility);
     this.wake();
+  }
+
+  // --- rolagem ---
+
+  /**
+   * Rola os dados SOBRE A MESA.
+   *
+   * A rolagem anterior fica onde parou até esta ser chamada — foi o pedido, e é
+   * o que acontece numa mesa de verdade. `DiceOnTable.prepare` é quem limpa.
+   */
+  async roll(dice: DieSpec[], seed?: number): Promise<TableRollResult> {
+    // Os dados estáticos que a mesa monta são só o estado inicial; a partir da
+    // primeira rolagem de verdade, quem manda no tapete é a simulação.
+    this.parts.dice.visible = false;
+
+    const result = await this.rolling.prepare(dice, seed);
+    this.wake();
+    // Só devolve DEPOIS de o número aparecer. Quem chama mostra o total quando
+    // esta promessa resolve, e não quando a simulação termina — senão o
+    // resultado aparece na interface com o dado ainda no ar.
+    await this.rolling.whenSettled();
+    return result;
+  }
+
+  /** Mostra o resultado na hora, sem esperar a animação. */
+  skipRoll(): void {
+    this.rolling.finish();
+    this.wake();
+  }
+
+  get isRolling(): boolean {
+    return this.rolling.isPlaying;
   }
 
   private readonly tick = (now: number) => {
@@ -207,8 +280,19 @@ export class TableScene {
       }
     }
 
+    this.rolling.advance(32);
     this.flicker(now);
     this.pipeline.render(this.scene, this.camera);
+
+    // O laço segue enquanto a mesa estiver à vista.
+    //
+    // A promessa original era desenhar SÓ durante o movimento da câmera. A
+    // oscilação da lâmpada quebrou essa promessa, e vale dizer por quê em vez de
+    // fingir que não: uma mesa parada lê como foto, e a cena inteira vive de
+    // parecer um lugar. O que sustenta a decisão é o custo medido — 640 no lado
+    // maior, uma luz, sem sombra dinâmica — e o fato de o laço PARAR nos dois
+    // lugares onde o jogador realmente fica: com a ficha aberta e com a aba em
+    // segundo plano.
     this.raf = requestAnimationFrame(this.tick);
   };
 
@@ -233,9 +317,33 @@ export class TableScene {
     const h = this.canvas.clientHeight || 1;
     this.renderer.setSize(w, h, false);
     this.pipeline.resize(w, h);
-    this.camera.aspect = w / h;
-    this.camera.updateProjectionMatrix();
+
+    this.aspect = w / h;
+    this.camera.aspect = this.aspect;
+
+    // A MESA se reorganiza com a tela, não só a câmera. Num celular em pé, a
+    // ficha e o tapete passam a ficar um atrás do outro — é o único eixo com
+    // espaço sobrando ali. Ver `viewpoints.ts`.
+    const layout = layoutFor(this.aspect);
+    if (layout !== this.layout) {
+      this.layout = layout;
+      this.parts.setLayout(layout);
+      this.placeRolling();
+    }
+
+    // Reaplica o enquadramento: tanto o `fov` quanto a disposição mudaram.
+    this.applyView(this.viewpoint(this.view));
     this.wake();
+  }
+
+  private placeRolling(): void {
+    const d = SPOTS[this.layout].dados;
+    // 0,02 é a superfície do tapete: os dados caem SOBRE ele, não dentro.
+    this.rolling.placeOn(d.x, 0.02, d.y);
+  }
+
+  get currentLayout(): Layout {
+    return this.layout;
   }
 
   /** Resolução interna em uso — para a verificação de que o alvo está baixo. */
@@ -258,6 +366,8 @@ export class TableScene {
     this.disposed = true;
     cancelAnimationFrame(this.raf);
     this.canvas.removeEventListener('pointerdown', this.onPointerDown);
+    document.removeEventListener('visibilitychange', this.onVisibility);
+    this.rolling.dispose();
     this.parts.dispose();
     this.pipeline.dispose();
     this.renderer.dispose();

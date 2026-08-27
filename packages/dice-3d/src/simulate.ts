@@ -417,6 +417,17 @@ export function simulate(opts: SimOptions): SimResult {
       world.step(STEP);
 
       if (record) {
+        // Cresce ANTES de escrever, não só na cutucada.
+        //
+        // A versão anterior só chamava `growTracks` ao cutucar um dado, partindo
+        // da ideia de que a folga acima de 300 passos existia para isso. Mas uma
+        // rolagem cheia pode passar de 300 sozinha, sem cutucada nenhuma — e aí
+        // a escrita caía fora do Float32Array, em silêncio, enquanto `steps`
+        // seguia contando. O resultado era uma gravação que dizia ter 312 passos
+        // com dados para 300: ler o último passo devolvia `undefined`, a posição
+        // virava NaN e o dado SUMIA da cena.
+        if (steps >= capacity) growTracks();
+
         const o = steps * 7;
         for (let i = 0; i < bodies.length; i++) {
           const b = bodies[i]!;

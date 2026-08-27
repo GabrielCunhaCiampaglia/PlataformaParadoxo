@@ -3,8 +3,8 @@ import * as THREE from 'three';
 /**
  * Texturas da mesa, DESENHADAS EM CANVAS em vez de carregadas de arquivo.
  *
- * Não é economia de preguiça: é a decisão certa para esta estética. A referência
- * é PS1, onde uma textura de madeira tinha 64 ou 128 px — e nesse tamanho o ruído
+ * Não é economia de preguiça: é a decisão certa para esta estética. Na referência
+ * — N64 — uma textura de madeira tinha 128 ou 256 px, e nesse tamanho o ruído
  * procedural é indistinguível de uma foto reduzida, porque quase toda a
  * informação da foto se perde na redução de qualquer jeito.
  *
@@ -13,8 +13,10 @@ import * as THREE from 'three';
  *  - nada para carregar pela rede, então a cena aparece pronta no primeiro frame;
  *  - a paleta sai de código, e acompanha o design system em vez de brigar com ele.
  *
- * Todas saem com filtro NEAREST e sem mipmap. É o que dá o serrilhado e o
- * cintilar característicos — num pipeline moderno isso seria defeito.
+ * Todas saem FILTRADAS, com mipmap. A primeira versão usava NEAREST, à la PS1, e
+ * o cliente achou pixelado demais: a referência que ele mandou é N64, onde a
+ * textura é bilinear e o serrilhado vem da geometria, não da superfície. O
+ * mipmap ainda mata o cintilar da madeira quando a câmera anda.
  */
 
 /** Ruído determinístico. A mesa precisa ser a MESMA a cada carregamento. */
@@ -40,12 +42,12 @@ function canvas(size: number): [HTMLCanvasElement, CanvasRenderingContext2D] {
 function toTexture(c: HTMLCanvasElement, repeat = 1): THREE.CanvasTexture {
   const t = new THREE.CanvasTexture(c);
   t.colorSpace = THREE.SRGBColorSpace;
-  // O par que faz a imagem ler como PS1: sem suavização e sem pirâmide de
-  // mipmaps. O pixel da textura aparece como pixel, e a superfície cintila
-  // quando a câmera anda — que é exatamente a memória visual do console.
-  t.magFilter = THREE.NearestFilter;
-  t.minFilter = THREE.NearestFilter;
-  t.generateMipmaps = false;
+  // Bilinear com mipmap, como no N64 da referência. Vale a pena pagar a
+  // pirâmide: sem ela o veio da madeira ferve quando a câmera se move.
+  t.magFilter = THREE.LinearFilter;
+  t.minFilter = THREE.LinearMipmapLinearFilter;
+  t.generateMipmaps = true;
+  t.anisotropy = 4;
   t.wrapS = THREE.RepeatWrapping;
   t.wrapT = THREE.RepeatWrapping;
   t.repeat.set(repeat, repeat);
@@ -55,10 +57,10 @@ function toTexture(c: HTMLCanvasElement, repeat = 1): THREE.CanvasTexture {
 /**
  * Madeira: tábuas escuras, veio corrido, juntas marcadas.
  *
- * 128 px cobrindo uma tábua, repetida pelo tampo. A escala é escolhida para o
+ * 256 px cobrindo uma tábua, repetida pelo tampo. A escala é escolhida para o
  * veio ficar visível a olho de quem está sentado, não fotorrealista de perto.
  */
-export function woodTexture(size = 128): THREE.CanvasTexture {
+export function woodTexture(size = 256): THREE.CanvasTexture {
   const [c, ctx] = canvas(size);
   const r = rng(0x5eed);
 
@@ -105,7 +107,7 @@ export function woodTexture(size = 128): THREE.CanvasTexture {
 /**
  * O papel da ficha, visto DE LONGE — ilegível de propósito.
  *
- * Aqui a baixa resolução deixa de ser concessão e vira ferramenta: o jogador
+ * A baixa resolução deixa de ser concessão e vira ferramenta: o jogador
  * reconhece "é uma ficha preenchida" pelo ritmo dos blocos de texto sem
  * conseguir ler nada, que é o estado certo antes de ele aproximar. O texto
  * de verdade é HTML, e entra por cima quando a câmera chega.
@@ -113,20 +115,26 @@ export function woodTexture(size = 128): THREE.CanvasTexture {
  * O desenho segue o layout da ficha oficial (doc 09): cabeçalho de identidade,
  * bloco de recursos à direita, coluna de perícias à esquerda, inventário abaixo.
  */
-export function paperTexture(size = 256): THREE.CanvasTexture {
+export function paperTexture(size = 512): THREE.CanvasTexture {
   const [c, ctx] = canvas(size);
   const r = rng(0xf1c4a);
 
+  // O desenho é feito num espaço fixo de 256 e ESCALADO para a resolução real.
+  // Sem isto, subir a textura de 256 para 512 empurraria a ficha inteira para o
+  // canto superior esquerdo, porque as coordenadas do layout são literais.
+  const S = 256;
+  ctx.scale(size / S, size / S);
+
   // Papel envelhecido, não branco.
   ctx.fillStyle = '#c9bda4';
-  ctx.fillRect(0, 0, size, size);
+  ctx.fillRect(0, 0, S, S);
 
   // Manchas de umidade e sujeira.
   for (let i = 0; i < 26; i++) {
     ctx.globalAlpha = 0.03 + r() * 0.06;
     ctx.fillStyle = r() > 0.5 ? '#8a7550' : '#6d5a3a';
     ctx.beginPath();
-    ctx.ellipse(r() * size, r() * size, 6 + r() * 26, 5 + r() * 20, r() * 3, 0, Math.PI * 2);
+    ctx.ellipse(r() * S, r() * S, 6 + r() * 26, 5 + r() * 20, r() * 3, 0, Math.PI * 2);
     ctx.fill();
   }
   ctx.globalAlpha = 1;
@@ -139,7 +147,7 @@ export function paperTexture(size = 256): THREE.CanvasTexture {
   };
 
   // Cabeçalho: título e faixa.
-  line(14, 14, size - 28, 3, 0.9);
+  line(14, 14, S - 28, 3, 0.9);
   line(14, 24, 74, 5, 0.9);
 
   // Identidade: pares de rótulo curto e campo preenchido.
@@ -154,7 +162,7 @@ export function paperTexture(size = 256): THREE.CanvasTexture {
   ctx.strokeStyle = ink;
   ctx.lineWidth = 1;
   for (let i = 0; i < 5; i++) {
-    const bx = size - 84 + (i % 2) * 40;
+    const bx = S - 84 + (i % 2) * 40;
     const by = 40 + Math.floor(i / 2) * 34;
     ctx.strokeRect(bx, by, 34, 26);
     line(bx + 8, by + 10, 18, 7, 0.85);
@@ -169,13 +177,13 @@ export function paperTexture(size = 256): THREE.CanvasTexture {
 
   // Inventário, embaixo à direita.
   ctx.globalAlpha = 0.6;
-  ctx.strokeRect(size - 108, 130, 96, 60);
-  for (let i = 0; i < 8; i++) line(size - 102, 138 + i * 7, 40 + r() * 40, 2, 0.5);
+  ctx.strokeRect(S - 108, 130, 96, 60);
+  for (let i = 0; i < 8; i++) line(S - 102, 138 + i * 7, 40 + r() * 40, 2, 0.5);
 
   // Vinco central: a ficha foi dobrada.
   ctx.globalAlpha = 0.12;
   ctx.fillStyle = '#000000';
-  ctx.fillRect(size / 2 - 1, 0, 2, size);
+  ctx.fillRect(S / 2 - 1, 0, 2, S);
 
   ctx.globalAlpha = 1;
   return toTexture(c, 1);
@@ -189,7 +197,7 @@ export function paperTexture(size = 256): THREE.CanvasTexture {
  * seria mágica visível. O tapete com friso justifica a parede — e é o que existe
  * numa mesa de RPG de verdade.
  */
-export function matTexture(size = 128): THREE.CanvasTexture {
+export function matTexture(size = 256): THREE.CanvasTexture {
   const [c, ctx] = canvas(size);
   const r = rng(0x7a9e);
 
@@ -207,8 +215,10 @@ export function matTexture(size = 128): THREE.CanvasTexture {
   ctx.globalAlpha = 0.5;
   ctx.strokeStyle = '#8d10e0';
   ctx.lineWidth = 1;
-  ctx.setLineDash([3, 3]);
-  ctx.strokeRect(6.5, 6.5, size - 13, size - 13);
+  const inset = size * 0.05;
+  ctx.lineWidth = Math.max(1, size / 128);
+  ctx.setLineDash([size / 42, size / 42]);
+  ctx.strokeRect(inset, inset, size - inset * 2, size - inset * 2);
   ctx.setLineDash([]);
 
   ctx.globalAlpha = 1;
@@ -216,7 +226,7 @@ export function matTexture(size = 128): THREE.CanvasTexture {
 }
 
 /** Metal fosco do bocal da lâmpada e do fio. */
-export function metalTexture(size = 32): THREE.CanvasTexture {
+export function metalTexture(size = 64): THREE.CanvasTexture {
   const [c, ctx] = canvas(size);
   const r = rng(0x3311);
   ctx.fillStyle = '#2b2b30';
