@@ -43,6 +43,18 @@ function snapshotEndpoint(): Plugin {
 }
 
 export default defineConfig({
+  /*
+   * Caminho base do site.
+   *
+   * Na Cloudflare o app fica na raiz do domínio e `base` é "/". No GitHub
+   * Pages ele é uma PROJECT PAGE e vive em /PlataformaParadoxo/, então todo
+   * asset e toda rota precisam do prefixo. Em vez de manter dois builds, o
+   * prefixo entra por variável e o código lê `import.meta.env.BASE_URL`.
+   *
+   * A barra final é obrigatória: o Vite a usa para concatenar os assets.
+   */
+  base: process.env.VITE_BASE || '/',
+
   plugins: [react(), snapshotEndpoint()],
 
   // Alias direto para o CÓDIGO-FONTE dos pacotes do workspace.
@@ -56,9 +68,12 @@ export default defineConfig({
       '@paradoxo/dice-3d': resolve(import.meta.dirname, '../../packages/dice-3d/src/index.ts'),
       '@paradoxo/table-3d': resolve(import.meta.dirname, '../../packages/table-3d/src/index.ts'),
       '@paradoxo/rules': resolve(import.meta.dirname, '../../packages/rules/src/index.ts'),
+      '@paradoxo/sheet': resolve(import.meta.dirname, '../../packages/sheet/src/index.ts'),
     },
   },
-  optimizeDeps: { exclude: ['@paradoxo/dice-3d', '@paradoxo/rules', '@paradoxo/table-3d'] },
+  optimizeDeps: {
+    exclude: ['@paradoxo/dice-3d', '@paradoxo/rules', '@paradoxo/sheet', '@paradoxo/table-3d'],
+  },
   build: { target: 'es2022', sourcemap: false },
   server: {
     // Respeita a porta atribuída pelo harness de preview quando existir.

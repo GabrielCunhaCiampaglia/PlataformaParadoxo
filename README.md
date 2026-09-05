@@ -18,9 +18,20 @@ Plataforma única para jogar o RPG **Paradoxo Epifânico**, sistema próprio e i
 
 Tudo acontece dentro do conceito de **Mesa** (campanha), com papel de **Mestre**.
 
-Projeto de **uso pessoal e comunitário**, não comercial. Infraestrutura de **custo zero**:
-Cloudflare Pages + Supabase Free, em `plataformaparadoxo.pages.dev`
+Projeto de **uso pessoal e comunitário**, não comercial. Infraestrutura de **custo zero**
 ([ADR-0011](docs/adr/0011-deploy-e-infraestrutura.md)).
+
+## No ar
+
+**<https://gabrielcunhaciampaglia.github.io/PlataformaParadoxo/>** — publicado a cada
+push no `main` pela [Action](.github/workflows/pages.yml), que também roda os testes e a
+checagem de tipos.
+
+| Rota | O que é |
+|---|---|
+| `/` | Rolagem de Ação e de Dano, com histórico local |
+| `/mesa` | A mesa 3D e o painel da ficha |
+| `/poc-dados` | Tela de medição da PoC de rolagem 3D |
 
 ## Documentação
 

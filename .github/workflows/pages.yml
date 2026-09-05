@@ -1,0 +1,87 @@
+name: CI e publicação no GitHub Pages
+
+# Este workflow faz DUAS coisas de propósito:
+#
+#  1. É a CI que faltava. Até agora os testes existiam e ninguém os rodava
+#     automaticamente — inclusive o teste de fogo da rotulagem dos dados, que é
+#     a garantia contra o pior defeito possível do produto (o dado mostrar um
+#     número diferente do que o motor decidiu).
+#  2. Publica o app no GitHub Pages.
+#
+# O job de publicação só roda no `main`. Em pull request, roda só a verificação.
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_dispatch:
+
+# Permite ao GITHUB_TOKEN publicar no Pages.
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+# Uma publicação por vez, sem cancelar a que já está em andamento.
+concurrency:
+  group: pages
+  cancel-in-progress: false
+
+jobs:
+  verificar:
+    name: Testes, tipos e build
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 10.33.0
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: pnpm
+
+      - run: pnpm install --frozen-lockfile
+
+      - name: Tipos
+        run: pnpm -r typecheck
+
+      - name: Testes
+        run: pnpm -r test
+
+      - name: Build
+        # O app é uma PROJECT PAGE: vive em /<repo>/, não na raiz do domínio.
+        # Sem este prefixo, todo asset apontaria para a raiz e voltaria 404.
+        env:
+          VITE_BASE: /${{ github.event.repository.name }}/
+        run: pnpm --filter @paradoxo/web build
+
+      - name: Preparar o diretório para o Pages
+        if: github.ref == 'refs/heads/main'
+        run: |
+          # O Pages não tem fallback de SPA. Sem isto, abrir /mesa direto ou dar
+          # F5 na rota devolve 404 — o index precisa responder também no 404.
+          cp apps/web/dist/index.html apps/web/dist/404.html
+          # Sem .nojekyll o Pages roda Jekyll e descarta arquivos iniciados por
+          # underscore antes de servir.
+          touch apps/web/dist/.nojekyll
+
+      - name: Empacotar
+        if: github.ref == 'refs/heads/main'
+        uses: actions/upload-pages-artifact@v3
+        with:
+          path: apps/web/dist
+
+  publicar:
+    name: Publicar
+    needs: verificar
+    if: github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deploy.outputs.page_url }}
+    steps:
+      - id: deploy
+        uses: actions/deploy-pages@v4
