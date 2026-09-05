@@ -1,6 +1,10 @@
 import { percentileDice } from '@paradoxo/dice-3d';
+import { PARADOXO_EPIFANICO_V1 as RULESET, rollAction } from '@paradoxo/rules';
+import type { SkillTotal } from '@paradoxo/sheet';
 import { TableScene, type Hotspot, type ViewName } from '@paradoxo/table-3d';
-import { useEffect, useRef, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import Ficha from './ui/Ficha';
+import { personagemExemplo } from './personagem-exemplo';
 
 /**
  * A mesa — cena inicial.
@@ -23,6 +27,7 @@ export default function Mesa() {
   const [qtd, setQtd] = useState(1);
   const [resultado, setResultado] = useState<number[] | null>(null);
   const [rolando, setRolando] = useState(false);
+  const ficha = useMemo(() => personagemExemplo(), []);
 
   useEffect(() => {
     const canvas = canvasRef.current;
@@ -64,6 +69,31 @@ export default function Mesa() {
       scene.dispose();
       sceneRef.current = null;
     };
+  }, []);
+
+  /*
+   * Rolar a partir da ficha. O motor decide o número e os dados apenas MOSTRAM
+   * o que ele decidiu — nunca o contrário. Enquanto os dados correm, a cena
+   * precisa voltar a desenhar e a câmera vai para o tapete; o painel se recolhe
+   * sozinho e revela a mesa atrás.
+   */
+  const rolarPericia = useCallback(async (pericia: SkillTotal) => {
+    const scene = sceneRef.current;
+    const resultado = rollAction(RULESET, { skill: pericia.total });
+    if (scene) {
+      scene.setPaused(false);
+      scene.goTo('dados');
+      await scene.roll(percentileDice(resultado.total));
+    }
+    return resultado;
+  }, []);
+
+  /** Fim da rolagem: a câmera volta ao papel e a cena congela de novo. */
+  const encerrarRolagem = useCallback(() => {
+    const scene = sceneRef.current;
+    if (!scene) return;
+    scene.goTo('ficha');
+    scene.setPaused(true);
   }, []);
 
   const voltar = () => {
@@ -112,18 +142,12 @@ export default function Mesa() {
       )}
 
       {sheetOpen && (
-        <div className="mesa-ficha">
-          <div className="mesa-ficha-papel">
-            <h1>Ficha de Membro</h1>
-            <p className="mesa-ficha-nota">
-              Aqui entra a ficha em HTML — o 3D atrás está congelado e não custa
-              GPU nenhuma enquanto esta tela está aberta.
-            </p>
-            <button type="button" className="mesa-fechar" onClick={voltar}>
-              Fechar
-            </button>
-          </div>
-        </div>
+        <Ficha
+          ficha={ficha}
+          onFechar={voltar}
+          onRolar={rolarPericia}
+          onEncerrarRolagem={encerrarRolagem}
+        />
       )}
 
       {view === 'dados' && !sheetOpen && (

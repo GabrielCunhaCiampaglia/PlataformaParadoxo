@@ -3,9 +3,10 @@
 Plataforma única para jogar o RPG **Paradoxo Epifânico**, sistema próprio e indie
 (ficção apocalíptica, horror / sci-fi / realismo).
 
-> **Estado: documentação. Nenhum código de produto foi escrito ainda.**
-> Este repositório está na fase de especificação. O desenvolvimento só começa
-> depois que os documentos em `docs/` estiverem aprovados pelo cliente.
+> **Estado: em desenvolvimento.** O motor de regras, os dados 3D, a mesa e o
+> painel da ficha estão escritos e testados (168 testes). O que ainda **não**
+> existe é toda a Fase 1: Supabase, contas, mesa multijogador, service worker,
+> CI e o Worker de keep-alive/backup. Ver [07 — Roadmap](docs/07-roadmap.md).
 
 ## Escopo do v1 — três frentes
 
@@ -34,7 +35,11 @@ Cloudflare Pages + Supabase Free, em `plataformaparadoxo.pages.dev`
 | [06 — Perguntas para o Cliente](docs/06-perguntas-para-o-cliente.md) | **Lista consolidada de pendências que travam o design** |
 | [07 — Roadmap](docs/07-roadmap.md) | Fases de entrega |
 | [08 — Rolagem 3D](docs/08-rolagem-3d.md) | **Dados 3D: tecnologia, catálogo, revelação e prova de conceito** |
-| [ADRs](docs/adr/) | Decisões de arquitetura registradas |
+| [09 — Ficha e Sistema](docs/09-ficha-e-sistema.md) | **A ficha oficial dissecada: perícias, traços, classes, dano, Pandora e catálogo** |
+| [ADRs](docs/adr/) | Decisões de arquitetura registradas (0001–0012) |
+
+O PDF oficial da ficha está versionado em
+[`docs/fontes/`](docs/fontes/), junto com a extração de texto que sustenta o doc 09.
 
 ## Repositórios de referência do cliente
 

@@ -1,0 +1,621 @@
+                   FICHA MEMBRO
+
+           JOGADOR:
+
+           PERSONAGEM:                                                                                         PATENTE:
+
+
+           APELIDO (SE APLICÁVEL):                                                                             AFILIAÇÃO: RESILIÊNCIA
+           IDADE:                                                                                              SALÁRIO: $                                  CAD             MISS                        KILL
+           GÊNERO:                                          CELULAR:                                           ORGANIZAÇÕES AMIGAS:
+           NACIONALIDADE:
+           ALTURA:                                  PESO:
+                                                                                                               CLASSE:
+           CONEXÕES IMPORTANTES:
+                                                                                                               PROFISSÃO ANTERIOR:
+
+                                                                                                                MOTIVAÇÃO PRINCIPAL:
+           MASCOTE (SE APLICÁVEL):
+
+           HISTÓRIA BREVE:
+                                                                                                                                                                                             *Ao perder 5 ou mais em uma sessão
+                                                                                                                                                                                             adquire algo de PANDORA.
+
+
+                                                                                                                                                                                             PSICOLÓGICO/
+                                                                                                                                     VIDA                                                      SANIDADE
+
+
+                                                                                                                   ATUAL:                                          ATUAL:
+
+
+
+
+                                                                                                                                   ENERGIA                                                     MANA
+                                                                                                                   ATUAL:                                          ATUAL:
+
+
+
+
+                                                                                                                                    CONTATO
+                                                                                                                                                                  ATUAL:
+                                                                                                                                    COM O OCULTO
+                                                                                                                                                                 *Não poderá chegar em 100
+
+
+
+
+                                                                TRAÇOS DE PRIORIDADE
+                                                               OBS: Os traços devem ser compatíveis                                                  OBS: Escolha com cuidado... Os traços te
+                                                               com sua classe, ou vice e versa. Tanto                                                dão benefícios nas perícias e vantagens
+                                                               com ambos os campos tanto com a                                                       diretas no jogo, assim como, pode também
+       EPIFÂNICO
+
+
+
+
+                                                               personalidade do seu personagem.                                                      te dar desvantagens nada agradáveis.
+                                                                                                                                                                                                                           Explicação de cada um dos Traços na Página 3
+PARADOXO
+
+
+
+
+                                                                                                            OBS: Os traços bloqueados podem ser
+                   OBS: De todos os traços liberados, só                                                    desbloqueados com o decorrer do RPG.
+                   será preenchido os 4 lotes. Se caso                                                      Suas escolhas e decisões de melhorar
+                   benefício de mais um lote, consultar o                                                   ou não, afetam diretamente na liberção
+                   Mestre.                                                                                  dos traços bloqueados.
+
+
+
+
+           TRAÇOS LIBERADOS                                                                                                            TRAÇOS BLOQUEADOS
+
+           • ARISCO NO PILOTO               • DESENHISTA            • MIRA LASER                        • ESTRATÉGICO                  • APRENDIZ                          • TRANSCENDENTE
+           • ATLETA                         • DOUTOR                • PERSPICAZ                         • TIGRE                        • BERSERKERS                        • VISÃO DO FUTURO
+           • CAIXA PRETA                    • ERRÁTICO              • POR TODOS                         • VELOCISTA                    • COMANDANTE                        • VINGADOR
+           • CLEPTOMANÍACO                  • FARSANTE              • PROGRAMADOR                       • VIVAÇO                       • CORAÇÃO DE FERRO                  • VOZ DO ÉTER
+           • COURAÇA                        • FURTIVO               • QUEBRA-OSSOS                      • VIRTUOSO                     • INTELECTO ANCESTRAL
+           • CRENÇA                         • INOVADOR              • SEGURO DE SI                      • ZOOLOVER                     • LÍDER DOS CAÍDOS
+           • CURIOSO                        • LÍNGUAS               • SEXTO SENTIDO                                                    • LUMINAR
+           • DESBRAVADOR                    • MÃOS DE FIOS          • SÓ VIVE UMA VEZ                                                  • SOMBRA DO CHUMBO
+                                                                                                                         PARADOXO
+                                                                                                                         EPIFÂNICO
+PERÍCIAS             DADO       D100   PONTOS           BÔNUS             TOTAL                 HABILIDADES
+                                       Distribuir 231 pontos. Máximo de 70 em uma perícia.
+
+
+ADESTRAMENTO                           [         ]+[               ]=
+AGILIDADE                              [         ]+[               ]=                           1.                                                      Habilidade de Ataque
+                                                                                                                                                        Custo: -10 pontos
+
+ARTES          ATAQUE DE TIRO
+                                       [         ]+[               ]=
+ATAQUE         [       ]+[      ]=     [         ]+[               ]=
+CARISMA                                [         ]+[               ]=
+CIÊNCIAS                               [         ]+[               ]=
+COMBATE        SANIDADE
+                                       [         ]+[               ]=
+CORAGEM        [       ]+[      ]=     [         ]+[               ]=
+CREDULIDADE                            [         ]+[               ]=
+CRIATIVIDADE                           [         ]+[               ]=                           2.                                                      Habilidade de Defesa
+                                                                                                                                                        Custo: -15 pontos
+CRIME                                  [         ]+[               ]=
+DISFARCE                               [         ]+[               ]=
+ESCUDO                                 [         ]+[               ]=
+ENCONTRAR                              [         ]+[               ]=
+FORÇA                                  [         ]+[               ]=
+FURTIVIDADE                            [         ]+[               ]=
+INICIATIVA                             [         ]+[               ]=
+INTIMIDAÇÃO                            [         ]+[               ]=
+INTUIÇÃO                               [         ]+[               ]=
+                                                                                                3.                                                      Habilidade de Ataque
+                                                                                                                                                        Custo: -10 pontos
+
+INVESTIGAÇÃO                           [         ]+[               ]=
+LÁBIA                                  [         ]+[               ]=
+LUTAR PELA VIDA                        [         ]+[               ]=
+MANA                                   [         ]+[               ]=
+MEDICINA                               [         ]+[               ]=
+MEMÓRIA                                [         ]+[               ]=
+MIRA                                   [         ]+[               ]=
+OCULTISMO                              [         ]+[               ]=                           4.                                                      *Habilidade Ultimate
+                                                                                                                                                        Custo: -25 pontos
+PILOTAGEM                              [         ]+[               ]=
+REFLEXO                                [         ]+[               ]=
+RESISTÊNCIA                            [         ]+[               ]=
+SORTE                                  [         ]+[               ]=
+SOBREVIVÊNCIA                          [         ]+[               ]=
+TECNOLOGIA                             [         ]+[               ]=
+
+
+INVENTÁRIO                             CARGA MÁXIMA                                                                      BOLSOS                        1 BOLSO = 2 ESPAÇOS
+
+
+ITEM MOCHILA/BOLSA                                      ESPAÇOS                              ITEM BOLSO                                                    ESPAÇOS
+
+
+
+
+                                                                                             Pequeno (1 espaço): Remédios, munição, chaves, papéis, carteira.
+
+                                                                                             Médio (2-3 espaços): Adagas, livros, pequenas ferramentas.
+
+                                                                                             Grande (4-6 espaços): Arcos, suprimentos, armas de pequeno porte.
+
+                                                                                             Muito grande (8-10 espaços): Armas de grande porte, espadas.
+
+
+
+                                                                                             *Consulte o mestre. Os itens citados são exemplos, eles podem variar ocupação.
+       PARADOXO
+       EPIFÂNICO
+TRAÇOS                                                         Cada traço fornece um bônus. Esse bônus vai diretamente para as perícias do jogador
+                                                                e também para a jogabilidade. Por isso, é bastante importante saber qual traço será a
+                                                               prioridade do jogador, e caso seja, desbloquear um traço, atente-se a evoluir tal perícia.
+
+
+
+LIBERADOS
+
+1. ARISCO NO PILOTO: +15 pontos na perícia Pilotagem. Pode pular os dados e ir direto ao destino, sem risco nenhum de pista.
+
+2. ATLETA: +5 pontos na perícia Agilidade e +6 em Força. Não gasta ação para pular/atravessar obstáculos.
+
+3. CAIXA PRETA: +20 pontos na perícia Memória. Ganha uma câmera fotográfica que não ocupa espaço.
+
+4. CLEPTOMANÍACO: +15 pontos na perícia Crime. Tem vantagem em furtar ou manipular pequenos objetos sem ser percebido.
+
+5. COURAÇA: +20 pontos na perícia Resistência. Reduz o dano em 5 pontos em cada ataque recebido.
+
+6. CRENÇA: +25 pontos na perícia Credulidade. Pode manter a sanidade sob os efeitos do oculto ou manipulação mágica.
+
+7. CURIOSO: +10 pontos na perícia Encontrar e +10 pontos na perícia Investigação. Descobre pistas adicionais em áreas importantes com um teste bom.
+
+8. DESBRAVADOR: +20 pontos na perícia Sobrevivência. Pode localizar suprimentos e abrigo em ambientes hostis e insalubres com facilidade.
+
+9. DESENHISTA: +25 pontos na perícia Artes. Ganha um papel e caneta que não ocupa espaço, além de ter vantagem em Artes.
+
+10. DOUTOR: +10 pontos na perícia Medicina. Cura com mais eficiência, restaurando mais 5 pontos de vida adicional por tratamento.
+
+11. ERRÁTICO: +10 pontos na perícia Reflexo. Pode esquivar e contra atacar com vantagem dos ataques.
+
+12. FARSANTE: +20 pontos na perícia Disfarce e +8 pontos em Lábia. Assume identidades falsas com uma máscara que não ocupa espaço.
+
+13. FURTIVO: +10 pontos na perícia Furtividade. Concede o triplo de vantagem ao ataque furtivo.
+
+14. INOVADOR: +15 pontos na perícia Criatividade. Consegue criar ferramentas ou itens com vantagem.
+
+15. LÍNGUAS: +20 pontos na perícia Ocultismo. Compreende línguas do oculto e de toda espécie após uma breve exposição.
+
+16. MÃO DE FIOS: +15 pontos na perícia Lábia e +8 pontos em Carisma. Pode manipular e mentir com vantagem.
+
+17. MIRA LASER: +15 pontos na perícia Mira. Realiza os ataques a distância com vantagem e acrescenta um movimento caso inimigo fora de mira.
+
+18. SEDE DE SANGUE: +20 pontos na perícia Ocultismo. Rituais executados ao estender as mãos, sem nenhum ingrediente.
+
+19. PERSPICAZ: +8 pontos na perícia Encontrar e +10 pontos em Intuição. Pode achar informações importantes em locais aleatórios.
+
+20. POR TODOS: +10 pontos na perícia Escudo. Após rolar Escudo para proteger quem importa, ganha +3 pontos de vida, caso perca.
+
+21. PROGRAMADOR: +20 pontos na perícia Tecnologia. Pode invadir sistemas digitais de qualquer local e manipular eletrônicos com seu pen-drive.
+
+22. QUEBRA-OSSOS: +10 pontos na perícia Ataque e +10 em Força. Realiza ataques corpo a corpo com mais 10 de dano base.
+
+23. SEGURO DE SI: +20 pontos na perícia Carisma e +8 em Lábia. Ignora efeitos de intimidação ou manipulação mental.
+
+24. SEXTO SENTIDO: +20 pontos na perícia Intuição. Descobre mentiras e disfarces com vantagem no dado.
+
+25. SÓ VIVE UMA VEZ: +20 pontos na perícia Sorte e +20 em Coragem. Uma vez por sessão pode, re-rolar um dado ruim.
+
+26. ESTRATÉGICO: +18 pontos na perícia Iniciativa. Vantagem nas duas primeiras ações.
+
+27. TIGRE: +20 pontos na perícia Intimidação. Pode sair de combates apenas colocando o inimigo para correr (não funciona com boss).
+
+28. VELOCISTA: +10 pontos na perícia Agilidade. Move-se rapidamente, podendo realizar 2 ações adicionais de deslocamento.
+
+29. VIVAÇO: +15 pontos na Vida base e +20 pontos em Lutar pela Vida. Consegue rolar Lutar pela Vida 2 vezes no RPG.
+
+30. VIRTUOSO: +10 pontos em sanidade. Pode rolar Sanidade com vantagem.
+
+31. ZOOLOVER: +25 pontos na perícia Adestramento. Pode acalmar ou influenciar a ação de animais ao redor com vantagem no dado.
+
+
+
+                       *Caso o ponto do traço seja acrescentado e passar de 85, deverá manter o número 85, pois é
+                     o máximo que poderá ser evoluído tal perícia. Mas nosso sistema não deixará seus pontos serem
+                      jogados fora, caso passe de 85 pontos e sobrar os pontos de tal traço, você poderá acrescentar
+                                         em outras perícias até conseguir gastar todos que sobraram.
+                                           É estritamente proibido juntar pontos, você deve usa-los.
+                                                                                                                                                        PARADOXO
+                                                                                                                                                        EPIFÂNICO
+TRAÇOS                                                                                                   Cada traço fornece um bônus. Esse bônus vai diretamente para as perícias do jogador
+                                                                                                          e também para a jogabilidade. Por isso, é bastante importante saber qual traço será a
+                                                                                                         prioridade do jogador, e caso seja, desbloquear um traço, atente-se a evoluir tal perícia.
+
+
+
+BLOQUEADOS
+
+1. APRENDIZ: +15 pontos em todas as perícias. Aprendeu de tudo um pouco rapidinho, né?
+
+2. BERSERKERS: Perícia de Força, Escudo, Ataque e Reflexos mudam o valor para 95 pontos. Ninguém se quer pode controlar sua fúria.
+
+3. COMANDANTE: +30 pontos na perícia Iniciativa. Após teste normal no dado, o grupo todo faz o que você quiser, sem consentimento.
+
+4. CORAÇÃO DE FERRO: +25 pontos base em Vida. Regeneração de 3 de vida após cada ataque.
+
+5. INTELECTO ANCESTRAL: Direito a saber qualquer coisa que esteja querendo aprender ou descobrir.
+
+6. LÍDER DOS CAÍDOS: Perícia de Adestramento muda o valor para 95 pontos. Capaz de comandar qualquer ser irracional existente.
+
+7. LUMINAR: Desperta mana pura capaz de curar qualquer coisa que tocar, e também, regenerar em 15 pontos de Vida.
+
+8. SOMBRA DO CHUMBO: Perícia de Ataque Tiro muda o valor para 90 pontos. Vantagem tripla no dado de Mira.
+
+9. TRANSCENDENTE: Forma não humana capaz de capacidades únicas. Após adquirir, consultar o Mestre.
+
+10. VISÃO DO FUTURO: Perícia de Intuição muda o valor para 90 pontos. Pode prever ações rolando intuição com vantagem.
+
+11. VINGADOR: Perícia de Agilidade e Ataque mudam o valor para 90 pontos. Pode ganhar mais uma ação a cada kill que fizer com vantagem.
+
+12. VOZ DO ÉTER: Perícia de Intuição muda o valor para 90 pontos. Ouve vozes do oculto a todo instante, lhe dizendo o caminho para a verdade.
+
+
+                                                                                                                 = Uma condição.
+
+
+
+
+CLASSES                                                                                                                      VALORES DE DANO
+                                                                                 Só poderá escolher uma classe.
+COLOSSO                                                                                                                     TIPO                                                           DANO
+Com uma resistência física incomparável, é capaz de suportar os ataques mais brutais,
+protegendo seus aliados com coragem inabalável. Especialista em força física e absorção de dano,
+ele se posiciona entre o perigo e sua equipe, garantindo que os outros possam agir com segurança.
+                                                                                                                             ARCOS                                                            2d10
+Se você quer ser a muralha que nunca cede, o Colosso é sua escolha.                                                                                                                           2d20
+                                                                                                                             ARMAS DE FOGO GRANDES
+
+INVESTIGADOR                                                                                                                 ARMAS DE FOGO PEQUENAS                                           1d20
+Curioso e furtivo, o Investigador combina inteligência com ação. Ele resolve enigmas, analisa
+                                                                                                                             BASTÃO                                                   1d10 + Acessórios
+s i t u a ç õ e s c o m p l exa s e a b o r d a c o m b a t e s c o m f r i eza e p l a n e j a m e n t o . S e m p r e
+focado em desvendar o que aconteceu e completando as missões, é a escolha para                                               CABEÇADA                                             1d6 + 1d100 Resistência
+quem gosta de solucionar problemas e liderar missões com lógica e calma. Se você
+busca ser o cérebro por trás das vitórias, torne-se um Investigador.                                                         CHUTE                                                             1d3
+
+                                                                                                                             CORONHADA                                               AG =1d10 / AP = 1d6
+KRAFTOR
+Manipuladores da mana, os Kraftor receberam a bênção em meio ao caos, a energia                                              ENFORCADA                                            1d6 + 1d100 Resistência
+adentrou em seu sangue, a mana na pura forma que o ser humano viu no terror da
+                                                                                                                             ESPADAS                                                           1d10
+Terra. Eles extraem o poder bruto da Krafta, moldando-a em habilidades de ataque.
+Se você deseja ser a força sobrenatural no campo de batalha, escolha o Kraftor.
+                                                                                                                             FACAS                                                             1d6
+                                                                                                                             JOELHADA                                                          1d3
+LAMINAR
+Rápido, e letal. O mestre do combate corpo a corpo. Suas lâminas, armas improvisadas são                                     KRAFTA                                                           1d20
+ferramentas de destruição em curtas distâncias. Focado em eliminar os inimigos com
+brutalidade ou elegância, ele é perfeito para quem prefere ação intensa e visceral. Para o                                   MACHADOS                                                         2d20
+Laminar, hesitar é perder... E ele nunca perde.
+                                                                                                                             MORDIDA                                                1d6 + 1d100 Sanidade
+
+OCULTISTA                                                                                                                    PEDRAS                                                            1d6
+É o caminho entre o mundo humano e o sobrenatural. Com uma conexão profunda com a
+Krafta, na sua forma mais suja, em rituais, ele a manipula para desvendar mistérios e obter
+                                                                                                                             SOCO                                                      1d3 + Acessórios
+vantagens. Se você quer se aprofundar no desconhecido e nas artes sombrias, o Ocultista
+                                                                                                                             VIDROS                                                            1d10
+é para você.
+
+
+
+SENTINELA                                                                                                                    *Esses danos são somente os AA (Auto-Ataques), o dano das habilidades não
+O Sentinela domina o campo de batalha à distância. Com olhos sempre atentos e precisão                                         tem nada a ver com essa tabela, mesmo que seja usado os itens na tabela.
+impecável, ele transforma o caos em ordem com seus disparos certeiros e estratégias
+                                                                                                                                     O dano pode variar de acordo com a especificação da cena ou
+calculadas. Especialista em visão ampliada, é ideal para quem prefere eliminar ameaças
+antes que elas se aproximem. Se você gosta de controle e exatidão, o Sentinela é sua mira perfeita.                                               do objeto em si que provocará o dano.
+       PARADOXO
+       EPIFÂNICO
+PANDORA                                                               Ao perder 5 (cinco) ou mais de Sanidade, o jogador deverá adquirir algo de PANDORA.
+                                                                      A cada 5 (cinco) percas de sanidade, o jogador deverá adquirir uma doença e ganhar
+                                                                             20 pontos de contato com o oculto (+20). PANDORA é personalizável.
+
+
+TRAUMAS
+AMNÉSIA DISSOCIATIVA: Perda de memória causada por trauma extremo.
+
+DEPRESSÃO PSICÓTICA: Estado depressivo severo com delírios e paranóia.
+
+DESPERSONALIZAÇÃO: Sensação de estar desconectado do próprio corpo ou mente.
+
+DESREALIZAÇÃO: Percepção de que o mundo ao redor não é real.
+
+MUTISMO SELETIVO: Incapacidade de falar em situações específicas devido a trauma.
+
+REMORSO: Inquietação, abatimento da consciência que percebe ter cometido uma falta, um erro; arrependimento, remordimento.
+
+SÍNDROME DO SOBREVIVENTE: Culpa intensa por ter sobrevivido quando outros morreram.
+
+TRANSTORNO DE ESTRESSE PÓS-TRAUMÁTICO (TEPT): Após eventos traumáticos, causando pesadelos, flashbacks e hipervigilância.
+
+TRANSTORNO DE PÂNICO: Ataques súbitos de terror, sem causa aparente.
+
+TRANSTORNO DISSOCIATIVO DE IDENTIDADE (TDI): Desenvolvimento de múltiplas personalidades como mecanismo de defesa.
+
+DOENÇAS
+ANSIEDADE: Preocupação intensa, excessiva e persistente e medo de situações cotidianas.
+
+DEPRESSÃO: Alterações de humor, tristeza profunda e perda de interesse em atividades que antes eram prazerosas.
+
+DOENÇA DE HUNTINGTON: Distúrbio neurodegenerativo que afeta o controle motor e mental.
+
+ESCLEROSE LATERAL AMIOTRÓFICA (ELA): Degeneração dos neurônios motores, levando à paralisia.
+
+FIBROMIALGIA: Causa dores crônicas pelo corpo sem uma causa específica.
+
+INSÔNIA FATAL FAMILIAR: Doença rara que impede o sono e causa morte em poucos meses.
+
+SÍNDROME DE CAPGRAS: Crença de que pessoas próximas foram substituídas por impostores.
+
+SÍNDROME DE COTARD: Transtorno mental no qual a pessoa acredita estar morta ou sem órgãos internos.
+
+SÍNDROME DE ESTOCOLMO: A vítima pode desenvolver sentimentos positivos em relação ao agressor, como simpatia, empatia ou amor.
+
+SÍNDROME DE GUILLAIN-BARRÉ: Sistema imunológico ataca os nervos, causando paralisia.
+
+SÍNDROME DE MARFAN: Afeta o tecido conjuntivo, tornando os ossos e órgãos frágeis.
+
+FOBIAS
+AICMOFOBIA: Medo de agulhas ou objetos pontiagudos.
+
+AGORAFOBIA: Medo de espaços abertos ou multidões.
+
+ATELOFOBIA: Medo de imperfeição ou de não ser bom o suficiente.
+
+CATOPTROFOBIA: Medo de espelhos e reflexos..
+
+CLAUSTROFOBIA: Medo extremo de lugares fechados.
+
+HEMATOFOBIA: Medo de sangue.
+
+HODOFOBIA: Medo de viajar ou se deslocar.
+
+NICTOFOBIA: Medo intenso do escuro.
+
+TAFEFOBIA: Medo de ser enterrado vivo.
+
+THANATOFOBIA: Medo intenso da morte ou do processo de morrer.
+
+
+          *Tudo que há em Pandora reflete no valor das perícias também. Esses listados não são só os únicos, são apenas exemplos.
+               Cada Trauma, Doença ou Fobia pode ser personalizada e surgir na hora da sessão, não precisa necessariamente
+                                        estar aqui na lista ou existir na vida real, fora do mundo do RPG.
+                                                                                                               PARADOXO
+                                                                                                               EPIFÂNICO
+TRATAMENTOS
+A sobrevivência no mundo devastado é um desafio constante. Ferimentos, doenças e lesões são inevitáveis em um ambiente onde a humanidade luta para
+se reerguer. Para garantir a recuperação, os jogadores podem recorrer a diferentes níveis de tratamento médico, desde cuidados básicos até procedimentos mais
+complexos. Os serviços médicos não são gratuitos e podem ser encontrados em clínicas improvisadas, centros de sobrevivência, por meio de médicos itinerantes
+que cobram por seus serviços ou no postinho da base! O custo do tratamento depende da gravidade dos ferimentos e dos recursos disponíveis no local.
+
+
+TRATAMENTO LEVE - $100,00 CAD
+Pequenos curativos, analgésicos e procedimentos simples para cortes e contusões. Restauram 1d6 do valor da Vida com vantagem.
+
+
+TRATAMENTO MODERADO - $200,00 CAD
+Cuidados mais avançados, incluindo pontos, imobilizações e medicamentos especializados. Útil para lesões mais sérias, como fraturas menores e infecções.
+Restauram 1d10 da Vida com vantagem.
+
+
+TRATAMENTO GRAVE - $500,00 CAD
+Procedimentos complexos, como cirurgias emergenciais, transfusões de sangue e reabilitação de ferimentos críticos. Essencial para personagens à beira da morte.
+Restauram 1d20 da Vida com vantagem.
+
+
+Os jogadores devem planejar bem seus recursos e estratégias de combate, pois depender de tratamentos médicos pode ser custoso e nem sempre acessível.
+Encontrar médicos confiáveis e locais seguros para recuperação pode ser tão difícil quanto vencer batalhas. Além de que o preço pode variar de acordo com a
+Região.
+
+
+
+REMÉDIOS                                                                             EQUIPAMENTOS
+
+
+TIPO                                                          CUSTO                  TIPO                                                       CUSTO
+
+TRANSTORNOS PSICOLÓGICOS                                                             BÁSICOS
+AGOMELATINA (VALDOXAN)                                        $752,61 CAD            CORDA (10 METROS) (PESO 3)                                 $58,95 CAD
+ALPRAZOLAM (FRONTAL/XANAX)                                    $78,95 CAD             LANTERNA (PESO 3)                                          $13,16 CAD
+AMITRIPTILINA                                                 $52,63 CAD             WALKIE-TALKIE (PESO 2)                                     $115,79 CAD
+BUPROPIONA (WELLBUTRIN)                                       $236,84 CAD            PANO MULTIUSO (PESO 2)                                     $26,32 CAD
+CLONAZEPAM (RIVOTRIL)                                         $65,79 CAD             BÍBLIA (PESO 3)                                              $0 CAD
+DIAZEPAM (VALIUM)                                             $39,47 CAD             MAPA (PESO 2)                                              $100,32 CAD
+FLUOXETINA (PROZAC)                                           $131,58 CAD            BASTÃO DE CAMINHADA (PESO 8)                               $53,16 CAD
+MELATONINA                                                    $78,95 CAD             LANTERNA UV LUZ NEGRA (PESO 3)                             $23,16 CAD
+SERTRALINA (ZOLOFT)                                           $105,26 CAD            LUPA (PESO 2)                                              $8,26 CAD
+TRAZODONA                                                     $184,21 CAD            BLOCO DE NOTAS (PESO 3)                                    $50,34 CAD
+VENLAFAXINA (EFEXOR)                                          $315,79 CAD            CANETA AZUL (PESO 1)                                       $5,00 CAD
+HALOPERIDOL (HALDOL) PARA CO                                  $131,58 CAD            CANETA PRETA (PESO 1)                                      $10,00 CAD
+OLANZAPINA (ZYPREXA)                                          $526,32 CAD            CANETA VERMELHA (PESO 1)                                   $5,00 CAD
+QUETIAPINA (SEROQUEL)                                         $394,74 CAD
+RISPERIDONA (RISPERDAL)                                       $263,16 CAD            COMBATE E DEFESA
+ZOLPIDEM (STILNOX)                                            $157,89 CAD                                                                       $126,32 CAD
+                                                                                     KARAMBIT (PESO 4)
+                                                                                     FACA TÁTICA (PESO 4)                                       $113,16 CAD
+DOENÇAS NEUROLÓGICAS E FÍSICAS                                                                                                                  $60,50 CAD
+                                                                                     MINI FACA (PESO 3)
+BACLOFENO                                                     $210,53 CAD            ANEL LÂMINA SECRETA (PESO 1)                               $39,47 CAD
+DIPIRONA                                                      $26,32 CAD             MACHADO (PESO 8)                                          $294,74 CAD
+GABAPENTINA                                                   $236,84 CAD            MACHADINHA (PESO 5)                                        $105,60 CAD
+IBUPROFENO                                                     $21,05 CAD            MACHETE (PESO 6)                                           $110,53 CAD
+LEVODOPA (PARKINSON)                                          $315,79 CAD            TASER (PESO 2)                                             $43,50 CAD
+MORFINA SINTÉTICA (HEROÍNA)                                   $789,47 CAD            RIFLE M4 CARBINE (5.56MM) (PESO 8)                        $378,95 CAD
+PREGABALINA (LYRICA)                                          $526,32 CAD            PISTOLA DESERT EAGLE (.50 AE) (PESO 6)                     $215,79 CAD
+TRAMADOL                                                      $131,58 CAD            PISTOLA GLOCK 17 (9MM) (PESO 5)                           $260,79 CAD
+CODEÍNA                                                       $184,21 CAD            SHOTGUN (PESO 9)                                          $473,68 CAD
+6-APB (6-(2-AMINOPROPIL)BENZOFURAN)                           $526,32 CAD            REVÓLVER MAGNUM .44 (PESO 6)                              $233,22 CAD
+CORTICOSTEROIDES (PREDNISONA)                                 $105,26 CAD            PISTOLA TAURUS PT 1911 (45 ACP) (PESO 5)                  $204,26 CAD
+IMUNOSSUPRESSORES (AZATIOPRINA)                               $657,89 CAD            RIFLE AK-47 (7.62MM) (PESO 8)                              $442,11 CAD
+                                                                                     ESPINGARDA (12 GAUGE) (PESO 10)                           $503,98 CAD
+INFECÇÕES, FERIMENTOS E SUPORTE MÉDICO                                               GRANADA DE MÃO (PESO 3)                                    $54,50 CAD
+                                                                                     BOMBA MOLOTOV (PESO 5)                                     $30,50 CAD
+AMOXICILINA                                                   $78,95 CAD
+                                                                                     ESCUDO BALÍSTICO (PESO 40)                                 $263,16 CAD
+CIPROFLOXACINO                                                $131,58 CAD
+                                                                                     COLETE À PROVA DE BALAS (PESO 4)                          $3.947,37 CAD
+VANCOMICINA                                                   $394,74 CAD
+                                                                                     MUNIÇÃO DIVERSA (30 UND) (PESO 5)                          $100,00 CAD
+MEDKIT
+                                                                                     FERRAMENTAS E TECH
+KIT DE PRIMEIROS SOCORROS                                     $100,00 CAD
+                                                                                     MALETA DE FERRAMENTAS (PESO 5)                             $110,47 CAD
+KIT MEDICINA AVANÇADA                                         $300,00 CAD
+                                                                                     SERRA ELÉTRICA (PESO 8)                                   $290,45 CAD
+                                                                                     BINÓCULOS (PESO 3)                                         $78,95 CAD
+          *Os preços dos remédios podem variar de região para região.                NOTEBOOK DELL (PESO 4)                                    $2.494,70 CAD
+
+            Fica mais caro ainda pela taxa de conversão. Valorize-os                 DRONE (PESO 4)                                            $3.088,16 CAD
+      PARADOXO
+      EPIFÂNICO
+SISTEMA PE
+O sistema de Paradoxo Epifânico RPG foi criado para facilitar a experiência de jogadores iniciantes e aqueles que nunca conseguiram
+se adaptar a sistemas mais complexos. Simplicidade e dinamismo são os pilares do PE, utilizando o D100, para ações, e o D2 adiante,
+para calcular danos e rolar situações específicas a mais. Este sistema foi projetado para tornar a jogabilidade intuitiva e acessível,
+enquanto mantém a emoção e profundidade.
+
+
+
+
+EXPLICAÇÃO DO SISTEMA
+1. O Sistema de Ações (D100)
+As ações no PE são determinadas pelo uso do D100. Cada personagem possui perícias com valores numéricos (sempre acima de
+45 ou 45) que representam suas chances de sucesso. A lógica é simples:
+
+
+• Para realizar uma ação, o jogador rola o D100.
+• O resultado deve ser igual ou inferior ao valor da perícia associada à ação.
+
+
+> Exemplo Prático: Se o personagem tem 45 em Força, ele precisa tirar 45 ou menos no D100 para que a ação seja bem-sucedida.
+
+
+
+
+REGRAS ESPECIAIS
+• 1 no D100: Sucesso extremo (a ação é realizada de forma excepcional).
+• 100 no D100: Fracasso extremo (a ação falha de forma desastrosa).
+
+
+Esse sistema cria uma experiência dinâmica, onde habilidades mais altas resultam em maior probabilidade de sucesso, mas sempre
+existe uma margem de incerteza para deixar o jogo interessante.
+
+
+
+2. O Sistema de Dano (D2 adiante)
+O dano no PE é calculado utilizando mais o D20, porém temos uma vastidão de dados, que são: D2, D3, D4, D6, D8, D10, D20, D30,
+D40, D50, D60, D70, D80, D90, D100. Combinado com o dano base do equipamento ou ataque utilizado. Este sistema é empregado
+principalmente para ataques simples, conhecidos como auto-ataques.
+
+
+> Exemplo Prático: Se o personagem quer dar um chute (que o dano é 1d6), ele terá que rolar o d100, se cair extremo, o dano deverá
+ser o máximo, ou seja, o chute dará 6 de dano. Se cair os sucessos, o jogador terá que rolar o dano do chute (d6) e ver quanto irá cair .
+
+
+Ataques complexos:
+Para habilidades ou ataques especiais, o cálculo pode variar de acordo com as condições da habilidade. Nesse caso, será necessário
+consultar a descrição específica da habilidade escolhida.
+
+
+Bom jogo!
+
+
+
+
+            *Se atente ao sistema, ele será seu amigo ou inimigo durante o jogo. Então a melhor forma de jogar é garantindo
+             sua amizade com ele, não? Ele te salvará ou te condenará. É bem facinho por isso, tente entender pelo menos.
+                 O sistema PE pode sofrer algumas atualizações durante o andamento do RPG caso necessário, porém
+                                      qualquer atualização será notificada, então não se preocupe!
+                                                                                                     PARADOXO
+                                                                                                    EPIFÂNICO
+HISTÓRIA                                                          Se atente e leia com calma, seu personagem precisa saber de tudo isso abaixo. Cada
+                                                                 detalhe e cada ocorrido precisa ser lembrado por você, então leia com calma e entenda
+                                                                     o que aconteceu no nosso universo. Se inspire caso esteja criando sua história.
+
+
+No universo, cada estrela, que pulsa no vazio carrega o peso de sua própria mortalidade, ao mesmo tempo que sussurra promessas de
+eternidade. Os nebulosos véus que se entrelaçam entre constelações parecem costurar o infinito, mas ocultam abismos que
+transcendem a compreensão humana. E o curioso olha e pensa: sou tão insignificante a ponto de não compreender tamanha
+imensidão? Sua vastidão nos reduz à insignificância, mas é justamente nessa pequenez que encontramos a essência do nosso ser.
+Somos fragmentos efêmeros de poeira estelar, mas também portadores de uma consciência capaz de contemplar e questionar o
+próprio tecido do espaço-tempo. Afinal, no caos celestial, talvez esteja a ordem que jamais compreenderemos, e, paradoxalmente, é isso
+que nos define. Nunca vamos entender... Nunca.
+
+É 2026, A humanidade seguia sua rotina previsível. Pessoas indo ao trabalho, jovens mergulhados em telas de celulares, não havia
+crianças mais nas ruas, enquanto os humanos desfrutavam dos vícios e alimentavam o governo, astrônomos e cientistas buscavam a
+explicação para um fenômeno recente, um clarão vindo do Ártico, equipes foram enviadas para lá em segredo, mas nada foi encontrado.
+Parecia difícil de acreditar, mas tinha provas, as notícias repercutiram, mas nada saiu de especulações, mas para eles... não. Tinha que
+haver uma resposta. Mal sabia eles que estava apenas começando... O mundo parecia imóvel em sua infinita repetição, até que tudo
+mudou em um instante.
+
+
+Foi durante uma noite estrelada e aparentemente tranquila que os telescópios detectaram um objeto vindo em direção à Terra.
+Inicialmente confundido com os restos de um foguete desativado, o objeto crescia a cada análise. Era algo parecido com um meteoro,
+maior do que qualquer coisa que a humanidade poderia conceber. Cientistas, perplexos e temerosos, notificaram as autoridades
+globais. O caos não demorou pra começar. As nações se uniram em um misto de desespero e esperança, especulando soluções para
+desviar ou destruir o objeto. Entretanto, não havia tempo suficiente. Uma transmissão internacional foi feita, informando que a nave
+colidiria com a Terra em algum lugar na região do ártico canadense, bem onde o misterioso clarão ocorreu, próximo a Nunavut, com um
+impacto catastrófico que alcançaria todos, em todo o canto da Terra. Pessoas choravam nas ruas; redes sociais transbordavam com
+especulações e despedidas virtuais.
+
+
+Quando a nave finalmente atingiu a superfície, o mundo estremeceu. O impacto de raio não foi apenas físico, foi existencial. Ondas de
+choque percorreram continentes, causando terremotos, tsunamis e um colapso elétrico global. No entanto, não foi o suficiente para
+balançar a terra, para destrui-la. Por algum motivo nada se abalou, a vida sobreviveu, mas o verdadeiro terror veio momentos depois. O
+"meteoro" emitiu uma pulsão desconhecida que fez todos os seres humanos (até onde sabemos) caírem desacordados
+instantaneamente. A terra silenciou por algumas horas, nada se manifestava no ocorrido. Quando os sobreviventes despertaram,
+descobriram um cenário dantesco: as "nuvens" cinzentas cobriam permanentemente os céus. O clima não foi afetado, mas cidades
+foram reduzidas a ruínas. A internet e a comunicação global cessaram, mergulhando a humanidade em completo isolamento. Era o
+colapso da civilização moderna.
+
+Teoricamente das entranhas do tal meteoro, criaturas que desafiavam qualquer explicação surgiram. Os Kiev, como foram chamados
+com o passar do tempo, possuíam formas grotescas, desproporcionais e sangrentas. Cada um deles parecia uma escultura de
+pesadelo, emitindo gritos ensurdecedores enquanto devastavam o que restava das cidades. Eles não buscavam escravizar, dialogar ou
+coexistir, seu objetivo era claro: dizimar a humanidade.
+
+Os primeiros anos após o impacto foram os mais cruéis. Famílias se separaram, comunidades foram dizimadas e a fome se espalhou
+como uma epidemia. Sem comida ou abrigo, os humanos se tornaram feras lutando por sobrevivência. Crianças, antes protegidas e
+cuidadas, eram deixadas à própria sorte. ONGs emergiram das sombras, essas instituições ensinavam combate e sobrevivência para
+que as crianças, mulheres e idosos pudessem sobreviver nesse novo mundo. Esses abrigos ofereciam conforto e preparo. Novas
+Regiões foram surgindo e se tornando independentes, não havia mais países, cidades, apenas um território imenso a ser dominado pelos
+mais fortes e nada podia impedir, nada poderia ser feito, tudo foi devastado. Essa organização se tornou comum entre os humanos,
+lutando por territórios para se abrigar e se proteger do oculto. Governos fragmentados lutaram para manter a ordem. Exércitos foram
+formados apressadamente, recrutando homens e mulheres sem distinção. Equipados com armas improvisadas e uma coragem
+desesperada, eles enfrentavam os Kiev, muitas vezes sem sucesso. Paralelamente, surgiram também organizações independentes.
+Algumas buscavam proteger sobreviventes, outras, alimentadas pelo desespero, tornaram-se facções criminosas, explorando e
+matando outros humanos.
+Em meio a esse caos, um sistema informal de ranking surgiu. Os sobreviventes passaram a observar as habilidades uns dos outros,
+categorizando os mais fortes, os mais ágeis e os mais inteligentes. Nomes surgiram como “clãsˮ, que se tornaram famosos por percorrer
+as ruínas, inspirando ou intimidando aqueles que os ouviam. Esse sistema se tornou uma forma de organização em um mundo onde as
+regras haviam desaparecido.
+
+Entre tantas facções, uma se destacou: a Organização Resiliência. Diferente das demais, eles não buscavam apenas lutar contra os
+Kiev; eles pesquisavam, estudavam e planejavam uma solução definitiva. Seus laboratórios escondidos em antigos bunkers e
+instalações subterrâneas eram alimentados por mentes brilhantes que sobreviveram. Um destaque que pode beneficiar ou ser um
+problema para a Organização. É aqui que a história começa. Os protagonistas, convocados pela Resiliência, possuem habilidades
+especiais, cada um com seu passado marcado pelo caos. Alguns perderam tudo, outros encontraram no sofrimento uma nova
+motivação. A missão que os une é simples, mas terrível: Anote aí:
+
+•   Entender os segredos dos Kiev.
+•   Descobrir onde está o meteoro.
+•   Descobrir a origem do meteoro.
+•   Conquistar informações sobre cada Região e Locais importantes.
+•   Garantir que a humanidade tenha uma chance de sobreviver.
+ PARADOXO
+ EPIFÂNICO
+SUA HISTÓRIA
+

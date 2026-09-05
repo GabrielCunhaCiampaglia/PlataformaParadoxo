@@ -1,8 +1,24 @@
 # 09 — Ficha e Sistema
 
-Extraído do PDF **"Paradoxo Epifânico - FICHA"**. Recebido em 20/08/2026 com 9
-páginas; reenviado em 27/08/2026 com 51 — mesmo conteúdo de ficha, mais o catálogo
-de itens da §13 e a ambientação da §13.6. As páginas extras são arte.
+Extraído do PDF **"Paradoxo Epifânico - FICHA"**, agora **versionado no repositório**
+em [`docs/fontes/paradoxo-epifanico-ficha.pdf`](fontes/paradoxo-epifanico-ficha.pdf).
+
+| | |
+|---|---|
+| Páginas | **9** (`pdfinfo`) |
+| SHA-256 | `6b6880f065b7f4c4fed076ff85a1f4b36b9114aed12e66b7f5233ed79056d25f` |
+| Criado | 11/02/2025 · Modificado 24/11/2025 · Produtor iLovePDF |
+| Re-extraído | 05/09/2026, com `pdftotext -layout` |
+
+> ⚠️ **Correção de procedência.** Este documento afirmava que o PDF de 27/08 tinha
+> **51 páginas** e que era ele que trazia o catálogo de itens e a ambientação. O
+> arquivo que temos tem **9 páginas** e traz os dois. A contagem de 51 não se
+> confirma em nenhum arquivo em mãos. Se existe mesmo uma versão de 51 páginas,
+> ela não está aqui — e a diferença precisa ser conferida com o cliente (**S23**).
+
+A extração de texto bruto foi refeita e está em
+[`docs/fontes/ficha-extracao-layout.txt`](fontes/ficha-extracao-layout.txt), para
+que qualquer afirmação abaixo possa ser conferida contra a origem sem reabrir o PDF.
 
 > Este documento substitui a lacuna que existia em [02 §4 e §5](02-regras-do-sistema.md).
 > Ele é a base do `sheet_template` v2 e do seed do banco.
@@ -350,7 +366,7 @@ mantém a tabela de quatro faixas confirmada em 19/08. → **Confirmar em S11.**
 
 | # | Prioridade | Pergunta |
 |---|---|---|
-| **S2** | 🔴 | As perícias começam em 45 (base) e aí distribui-se 231 pontos, ou os 231 são o total? A conta não fecha: 231 ÷ 33 = 7 |
+| ~~S2~~ | ✅ | ~~As perícias começam em 45 ou os 231 são o total?~~ **RESOLVIDA pela página 7 do próprio PDF** — ver §15.1 |
 | **S8** | 🔴 | Inventário é por **espaços** (1–10) ou por **peso** (o escudo balístico é 40)? São a mesma coisa? |
 | **S10** | 🔴 | **O que "vantagem" faz mecanicamente?** E "vantagem tripla"? |
 | **S11** | 🟠 | Confirmar que "Sucesso Bom" (`teto(P/2)`) vale, mesmo não constando na página 7 do PDF |
@@ -372,11 +388,10 @@ O PDF entregue em 27/08 traz o mesmo conteúdo de ficha do anterior (de 9 págin
 e acrescenta o que faltava para o inventário: **um catálogo de itens com espaço
 ocupado e preço**. As páginas extras são arte.
 
-> ⚠️ **Os preços não estão aqui.** A coluna de valores saiu desalinhada das linhas
-> na extração de texto — o `TRANSTORNOS PSICOLÓGICOS`, que é cabeçalho, aparece com
-> preço, e a corda de 10 m sai mais cara que a lanterna. Transcrever isso seria
-> inventar número de economia. Os **espaços saíram limpos**, porque vêm dentro do
-> próprio nome do item. Ver **S14**.
+> ✅ **Os preços estão aqui agora.** Os 72 itens, com preço e peso, estão em
+> `packages/sheet/src/catalog.ts`, gerados por extração de coluna. O diagnóstico
+> antigo ("a corda de 10 m sai mais cara que a lanterna") estava **errado**: a
+> corda custa mesmo $58,95 contra $13,16 da lanterna. Ver §15.2.
 
 ### 13.1 `PESO` no catálogo é `ESPAÇO` na ficha — ✅ resolve S8
 
@@ -460,7 +475,7 @@ rolagem.
 ### 13.5 O catálogo de dados, confirmado
 
 O PDF lista textualmente: `d2 d3 d4 d6 d8 d10 d20 d30 d40 d50 d60 d70 d80 d90 d100`.
-São os 15 do [doc 03](03-catalogo-de-dados.md), e confirma que o d100 do dano é
+São os 15 do [doc 08 §2](08-rolagem-3d.md), e confirma que o d100 do dano é
 rolagem de valor, não o par percentual da ação.
 
 ### 13.6 Ambientação — novo
@@ -477,7 +492,109 @@ que é quem convoca os personagens. É o que justifica o `$ CAD` e o campo Afili
 
 | # | Prioridade | Pergunta |
 |---|---|---|
-| **S14** | 🔴 | Os **preços** do catálogo saíram desalinhados na extração. Preciso das páginas de Remédios e Equipamentos como imagem, ou de uma planilha |
+| ~~S14~~ | ✅ | ~~Preços desalinhados na extração.~~ **RESOLVIDA sem o cliente** — era falha do nosso método, não do PDF. Ver §15.2 |
 | **S15** | 🟠 | O escudo balístico (40) não cabe em mochila nenhuma. Existe slot de **equipado** separado do inventário? |
 | **S16** | 🟠 | Remédio ocupa 1 espaço cada, ou um frasco/caixa conta como um item só? |
 | **S17** | 🟡 | `CARGA MÁXIMA` da ficha sai de qual conta — Força, Resistência, valor fixo? |
+
+---
+
+## 15. Re-extração de 05/09/2026 — o que mudou
+
+O PDF entrou no repositório e foi re-extraído com `pdftotext -layout`, que
+preserva colunas. Duas perguntas 🔴 caíram, cinco novas apareceram, e o dataset
+inteiro virou código tipado em `packages/sheet`.
+
+### 15.1 S2 resolvida — a base é 45
+
+A página 7, no parágrafo "O Sistema de Ações (D100)", diz literalmente:
+
+> *"Cada personagem possui perícias com valores numéricos **(sempre acima de 45
+> ou 45)** que representam suas chances de sucesso."*
+
+E o exemplo logo abaixo confirma:
+
+> *"Se o personagem tem 45 em Força, ele precisa tirar 45 ou menos no D100."*
+
+**Os 231 pontos não são o total das perícias — são o que se distribui acima de
+uma base de 45.** A conta que "não fechava" (231 ÷ 33 = 7) partia do zero, que
+nunca foi a premissa do sistema.
+
+Com isso, a criação de personagem fecha inteira:
+
+| Regra | Valor | Onde está no PDF |
+|---|---|---|
+| Base de toda perícia | **45** | p. 7 |
+| Pontos a distribuir | **231** | p. 2, cabeçalho das perícias |
+| Teto na distribuição inicial | **70** | p. 2, mesma linha |
+| Teto depois de bônus de traço | **85** | p. 3, rodapé |
+| Excedente do teto | vai para outra perícia | p. 3, rodapé |
+| Guardar pontos | **proibido** | p. 3: "é estritamente proibido juntar pontos" |
+
+Tudo isso está em `packages/sheet/src/rules.ts`, com a citação ao lado de cada
+constante, e coberto por teste.
+
+### 15.2 S14 resolvida — o erro era nosso
+
+Os preços não estavam desalinhados no PDF. A página 6 tem **duas colunas**
+(Remédios à esquerda, Equipamentos à direita) e a extração ingênua lia as duas
+como uma linha só, intercalando nome de uma com preço da outra. Foi isso que
+produziu "TRANSTORNOS PSICOLÓGICOS com preço" — o cabeçalho da esquerda colidindo
+com `MINI FACA (PESO 3) $60,50` da direita.
+
+A correção é recortar cada coluna por geometria antes de extrair:
+
+```
+pdftotext -f 6 -l 6 -layout -x 0   -y 250 -W 300 -H 600 ficha.pdf remedios.txt
+pdftotext -f 6 -l 6 -layout -x 300 -y 250 -W 295 -H 600 ficha.pdf equipamentos.txt
+```
+
+Resultado: **72 itens** limpos — 34 remédios e 38 equipamentos —, todos com preço
+em $ CAD e os equipamentos com peso. Não foi preciso pedir nada ao cliente.
+
+O catálogo é **gerado por script**, não transcrito à mão, e há teste conferindo
+os seis preços que a extração antiga tinha embaralhado.
+
+### 15.3 A tabela de dano, completa
+
+Dezessete linhas de auto-ataque na página 4. **Quatro não são roláveis sem
+arbitragem** e estão marcadas assim no código:
+
+| Linha | Fórmula | Por que trava |
+|---|---|---|
+| Bastão · Soco | `1d10 + Acessórios` · `1d3 + Acessórios` | "Acessórios" não é definido em lugar nenhum (**C2**) |
+| Cabeçada · Enforcada | `1d6 + 1d100 Resistência` | Cita uma perícia sem dizer a operação (**R7**) |
+| Mordida | `1d6 + 1d100 Sanidade` | Idem, com Sanidade |
+| Coronhada | `AG = 1d10 / AP = 1d6` | **AG e AP não aparecem em nenhuma outra página** (**S22**) |
+
+As outras doze são expressões fechadas e já rolam no motor.
+
+### 15.4 Contradições novas que a leitura fina achou
+
+| # | Prioridade | O quê |
+|---|---|---|
+| **S18** | 🟠 | **`LUTAR PELA VIDA` é a única perícia impressa em vermelho** na página 2. O PDF não explica. VIVAÇO diz "consegue rolar Lutar pela Vida 2 vezes", o que sugere rolagem de morte iminente com regra própria |
+| **S19** | 🟠 | **`SANIDADE` é recurso E perícia ao mesmo tempo.** Tem "Atual" no topo da ficha e uma linha `[pontos]+[bônus]=` na página 2. VIRTUOSO fecha a evidência: "+10 pontos em sanidade. Pode **rolar** Sanidade com vantagem" |
+| **S20** | 🟠 | **`SEDE DE SANGUE` está na lista detalhada da página 3 mas não na capa.** São 31 traços detalhados contra 30 listados. E a capa escreve "MÃOS DE FIOS", a página 3 escreve "MÃO DE FIOS" |
+| **S21** | 🔴 | **Os traços bloqueados rompem o teto de 85.** BERSERKERS põe quatro perícias em 95; VINGADOR e SOMBRA DO CHUMBO em 90. O rodapé da página 3 diz que 85 "é o máximo que poderá ser evoluído". Qual regra vence? E VISÃO DO FUTURO e VOZ DO ÉTER fixam Intuição em 90 os dois — ter os dois não soma nada |
+| **S22** | 🟠 | **`AG` e `AP` na linha Coronhada** não são definidos em nenhuma página |
+| **S23** | 🟡 | O PDF em mãos tem 9 páginas. A versão de **51 páginas** citada antes não se confirma. Existe mesmo? |
+
+### 15.5 O que virou código
+
+`packages/sheet` tem o dataset inteiro tipado, com a citação do PDF em cada
+decisão e **31 testes** travando as invariantes:
+
+| Arquivo | Conteúdo |
+|---|---|
+| `rules.ts` | Base 45, 231 pontos, tetos 70/85, 4 lotes, custos de habilidade, 1 bolso = 2 espaços |
+| `skills.ts` | As 33 perícias na ordem impressa, as 2 extras, os 5 recursos |
+| `traits.ts` | 31 traços liberados e 12 bloqueados, com efeito mecânico separado do texto narrativo |
+| `classes.ts` | 6 classes, 17 linhas de dano, 3 tratamentos |
+| `catalog.ts` | 72 itens — **gerado**, não digitado |
+| `pandora.ts` | 31 condições — **gerado** |
+| `character.ts` | Derivação de total e validação da distribuição |
+
+A regra que o código segue em todo lugar: **efeito que o PDF quantifica vira
+número; efeito narrativo fica como texto para o Mestre arbitrar.** O motor não
+inventa mecânica que o sistema não tem.

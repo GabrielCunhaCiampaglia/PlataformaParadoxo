@@ -3,11 +3,29 @@
   "compilerOptions": {
     "jsx": "react-jsx",
     "noEmit": true,
-    "types": ["vite/client", "node"],
+    "types": [
+      "vite/client",
+      "node"
+    ],
     "paths": {
-      "@paradoxo/rules": ["../../packages/rules/src/index.ts"],
-      "@paradoxo/dice-3d": ["../../packages/dice-3d/src/index.ts"]
+      "@paradoxo/rules": [
+        "../../packages/rules/src/index.ts"
+      ],
+      "@paradoxo/dice-3d": [
+        "../../packages/dice-3d/src/index.ts"
+      ],
+      "@paradoxo/table-3d": [
+        "../../packages/table-3d/src/index.ts"
+      ],
+      "@paradoxo/sheet": [
+        "../../packages/sheet/src/index.ts"
+      ]
     }
   },
-  "include": ["src/**/*.ts", "src/**/*.tsx", "vite.config.ts"]
+  "include": [
+    "src/**/*.ts",
+    "src/**/*.tsx",
+    "test/**/*.ts",
+    "vite.config.ts"
+  ]
 }

@@ -8,14 +8,16 @@
     "build": "tsc --noEmit && vite build",
     "preview": "vite preview",
     "typecheck": "tsc --noEmit",
-    "cf-deploy": "pnpm run build && wrangler deploy"
+    "cf-deploy": "pnpm run build && wrangler deploy",
+    "test": "vitest run"
   },
   "dependencies": {
-    "@paradoxo/rules": "workspace:*",
-    "react": "^19.2.0",
-    "react-dom": "^19.2.0",
     "@paradoxo/dice-3d": "workspace:*",
-    "@paradoxo/table-3d": "workspace:*"
+    "@paradoxo/rules": "workspace:*",
+    "@paradoxo/sheet": "workspace:*",
+    "@paradoxo/table-3d": "workspace:*",
+    "react": "^19.2.0",
+    "react-dom": "^19.2.0"
   },
   "devDependencies": {
     "@types/node": "^26.2.0",
@@ -24,6 +26,7 @@
     "@vitejs/plugin-react-swc": "^4.2.2",
     "typescript": "^5.9.3",
     "vite": "^7.3.1",
+    "vitest": "^3.2.4",
     "wrangler": "^4.124.0"
   }
 }
