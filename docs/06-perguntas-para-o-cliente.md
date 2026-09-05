@@ -19,7 +19,7 @@ Lista consolidada. Cada pergunta tem um selo de prioridade:
 | **R2** | **Arredondar para cima.** O limiar de Sucesso Bom é `teto(Perícia / 2)` |
 | **R8 / R9** | **A tela de rolagem é livre.** Pode-se rolar sem Perícia; vincular uma Perícia é opcional e só então o resultado é interpretado |
 | **D1** | **A fonte Helvetica Now Display pode ser usada.** A tipografia do protótipo fica preservada |
-| **F1–F6** | ⏸️ **Ficha em aberto por decisão do cliente.** Ele enviará a definição depois; o template v1 fica vazio |
+| **F1–F6** | ✅ **RESPONDIDAS pela ficha oficial**, recebida em 20/08/2026 e dissecada em [09](09-ficha-e-sistema.md). 33 perícias, 5 recursos, 43 traços, 6 classes, inventário por espaços |
 
 Regra oficial resultante em [02 — Regras do Sistema §1.2](02-regras-do-sistema.md).
 
@@ -52,24 +52,23 @@ Regra oficial resultante em [02 — Regras do Sistema §1.2](02-regras-do-sistem
 | C7 | 🟠 | Como funciona **iniciativa / ordem de turno**? Existe? |
 | C8 | 🟡 | Existe **armadura** e como ela entra na conta? |
 
-## C. Ficha de personagem ⏸️ *aguardando o cliente*
+## C. Ficha de personagem ✅ *respondida pelo PDF oficial*
 
-**Em aberto por decisão do cliente (19/08/2026).** Ele enviará a definição da ficha depois.
-Até lá, `sheet_template` v1 fica **vazio** e nada é presumido por analogia.
+**A ficha chegou em 20/08/2026** e está dissecada em
+[09 — Ficha e Sistema](09-ficha-e-sistema.md). O PDF está versionado em
+[`docs/fontes/`](fontes/). F1–F6 estão respondidas; o que sobrou virou S1–S23.
 
-Isso **não trava a frente de Dados**, que só precisa de um número entre 1 e 100 — digitável
-enquanto a ficha não existe, exatamente como o rolador atual já faz.
-
-As perguntas abaixo permanecem como roteiro para quando ele for definir o formato:
+O `sheet_template` **v2** já pode ser escrito: o dataset inteiro está tipado e testado
+em `packages/sheet`.
 
 | # | 🔴🟠🟡 | Pergunta |
 |---|---|---|
-| F1 | ⏸️ | **Você tem a ficha em papel, PDF, planilha ou anotação?** Se sim, ela responde metade desta seção sozinha — é o item mais valioso que podemos receber. |
-| F2 | ⏸️ | Quais são as **Perícias** do sistema? Lista fechada, ou o jogador cria as dele? |
-| F3 | ⏸️ | Qual a **faixa de valores** de uma Perícia? 0–100? Existe teto? |
-| F4 | ⏸️ | Existe uma camada de **Atributos** (Força, Agilidade, Intelecto…) acima das Perícias? Os atributos **derivam** o valor das perícias por fórmula, ou são independentes? |
-| F5 | ⏸️ | Quais **recursos** o personagem tem? Vida/Saúde é certo. Existe Sanidade, Estresse, Energia, Fome? Como se recuperam? |
-| F6 | ⏸️ | O que mais aparece na ficha? Nome, idade, ocupação, aparência, história, contatos, condições/status? |
+| ~~F1~~ | ✅ | ~~Você tem a ficha em papel, PDF ou planilha?~~ **Sim: PDF de 9 páginas, agora versionado no repositório** |
+| ~~F2~~ | ✅ | **33 perícias, lista fechada**, mais Ataque de Tiro e Sanidade fora da lista (S1, S19) |
+| ~~F3~~ | ✅ | **Base 45, teto 70 na criação e 85 com traço** — mas os traços bloqueados rompem esse teto (S21) |
+| F4 | 🟠 | **A ficha não tem camada de Atributos** — só perícias. Confirmar que é intencional, e não uma página que ficou de fora. Existe uma camada de **Atributos** (Força, Agilidade, Intelecto…) acima das Perícias? Os atributos **derivam** o valor das perícias por fórmula, ou são independentes? |
+| ~~F5~~ | ✅ | **Cinco:** Vida, Psicológico/Sanidade, Energia, Mana, Contato com o Oculto. Valores iniciais e máximos continuam sem constar (S12) |
+| ~~F6~~ | ✅ | **Identidade completa mapeada** no doc 09 §1: jogador, patente, apelido, afiliação, idade, gênero, nacionalidade, altura, peso, salário, celular, organizações amigas, conexões, classe, profissão anterior, motivação, mascote e história breve |
 | F7 | 🟠 | Existe **progressão**? XP, evolução de perícia por uso, níveis? |
 | F8 | 🟠 | O **"Ranking de combate"** citado na lore é mecânica de personagem ou só ambientação? Se é mecânica, como funciona? |
 | F9 | 🟠 | A **Organização Resiliência** (ou outras facções) tem efeito na ficha? |
@@ -148,9 +147,15 @@ unidades). O catálogo de 15 dados foi reduzido a 5 sólidos — ver
 | Frente | Depende de | Situação |
 |---|---|---|
 | **Dados** | ~~R1, R2, R8, R9~~ · R4, R5, R6, R7, C2, C3 | **Parcialmente destravada** — a tabela de resultados está fechada |
-| **Ficha** | F1–F6 | ⏸️ Aguardando o cliente enviar a definição |
-| **Inventário** | I1, I2, I3, I4 | Travada |
+| **Ficha** | ~~F1–F6~~ · S2 ✅ · **S21** | ✅ **Destravada.** Só S21 (teto 85 contra traço que fixa 90/95) muda código |
+| **Inventário** | ~~I3~~ · I1, I2, I4, **S8** | **Parcial** — catálogo com 72 itens, peso e preço extraído; falta saber se espaço e peso são a mesma grandeza |
 | **Design** | ~~D1~~ | ✅ **Destravada** |
+
+**O que mudou em 05/09/2026:** o PDF entrou no repositório e foi re-extraído com
+preservação de coluna. **S2** (a base 45) e **S14** (os preços) caíram — a segunda era
+falha do nosso método de extração, não do PDF. Apareceram **S18–S23**, e a única
+🔴 nova é **S21**: os traços bloqueados fixam perícias em 90 e 95, contra um teto
+impresso de 85. Ver [09 §15](09-ficha-e-sistema.md).
 
 **O que mudou em 19/08/2026:** o design saiu do caminho crítico (fonte liberada) e a
 mecânica central da rolagem está fechada. O gargalo agora é **R4–R7** — Falha Crítica, grau

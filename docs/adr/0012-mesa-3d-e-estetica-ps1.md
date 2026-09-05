@@ -12,7 +12,7 @@ de madeira, uma lâmpada amarela pendurada que mal aparece, e nada mais.
 Contra isso pesavam três objeções, levantadas antes de qualquer código:
 
 1. **Celular.** A decisão que sustenta a rolagem é renderizar SOB DEMANDA
-   ([doc 08 §5](../08-poc-rolagem-3d.md)): numa sessão de 4 h com 100 rolagens são ~2 min de
+   ([doc 08 §5](../08-rolagem-3d.md)): numa sessão de 4 h com 100 rolagens são ~2 min de
    GPU, não 4 h. Uma cena persistente em primeira pessoa joga isso fora.
 2. **Assets.** Madeira, cumbuca e papel em PBR são alguns MB, e o bundle já está em 226 KB
    comprimidos contra um orçamento de ~155 KB.

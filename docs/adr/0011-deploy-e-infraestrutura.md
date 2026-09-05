@@ -116,3 +116,55 @@ Supabase para religar manualmente.
    crescendo — resolvível com arquivamento de rolagens antigas antes de pensar em pagar.
 3. **Se a comunidade crescer muito além de dezenas de pessoas.** O limite de 200 conexões
    realtime simultâneas seria o primeiro a apertar.
+
+---
+
+## Adendo — 05/09/2026: GitHub Pages como vitrine
+
+O cliente configurou GitHub Pages no repositório. Isso **não substitui** a decisão
+acima; passam a existir dois alvos, com papéis diferentes:
+
+| Alvo | Papel | Endereço |
+|---|---|---|
+| **GitHub Pages** | Vitrine e preview. Estático puro | `https://gabrielcunhaciampaglia.github.io/PlataformaParadoxo/` |
+| **Cloudflare** | Produção, quando a Fase 1 existir | `plataformaparadoxo.pages.dev` (ainda não resolve) |
+
+O Pages **não substitui a Cloudflare** por um motivo concreto: o ADR acima depende
+de um **Worker com Cron Trigger** para o keep-alive do Supabase e o backup. O
+GitHub Pages é estático puro, sem execução no servidor e sem cron. Se a plataforma
+for para o Pages em definitivo, o keep-alive e o backup precisam de outra casa — e
+sem keep-alive o Supabase pausa em 7 dias.
+
+### O que precisou mudar no código
+
+- `base` do Vite entra por `VITE_BASE`. O Pages serve uma **project page** em
+  `/PlataformaParadoxo/`, a Cloudflare serve na raiz. Um build só, prefixo por
+  variável, e o roteador lê `import.meta.env.BASE_URL`.
+- `index.html` usa `%BASE_URL%` em vez de caminho relativo. Com `./`, uma rota
+  com barra final (`/PlataformaParadoxo/mesa/`) resolveria o asset para dentro
+  de `/mesa/` e devolveria 404.
+- O manifest usa caminhos relativos, que resolvem contra a URL do próprio
+  manifest e funcionam nos dois alvos sem duplicação.
+- `404.html` é uma cópia do `index.html`. O Pages não tem fallback de SPA como o
+  `not_found_handling` do wrangler; sem a cópia, abrir `/mesa` direto devolve a
+  página de erro do GitHub. A rota continua respondendo **status 404** com o
+  conteúdo do app — é o comportamento normal do Pages e o navegador executa o
+  JS assim mesmo.
+
+### Domínio: `plataforma-paradoxo.github.dev` não funciona
+
+Foi configurado como custom domain e **não pode funcionar**. `github.dev` é o
+domínio do editor web do próprio GitHub. O nome resolve para `52.224.38.193`
+(`vsapi-cluster-prod-rel-web-perf-tm.trafficmanager.net`, infraestrutura Azure do
+github.dev), enquanto o GitHub Pages serve de `185.199.108-111.153` e
+`2606:50c0:800x::153`.
+
+O "DNS check successful" da interface só confirma que o nome resolve — e ele
+resolve porque é o wildcard do próprio GitHub, numa zona que não é nossa. É por
+isso que o **Enforce HTTPS aparece indisponível**: o GitHub não emite certificado
+para um domínio que não consegue validar como do usuário. Sem HTTPS não há service
+worker, e o PWA do [ADR-0004](0004-pwa.md) não existe.
+
+**O custom domain precisa ser removido** nas configurações do Pages. Um domínio
+próprio de verdade (ex.: `paradoxoepifanico.com`) resolveria, mas aí é compra de
+domínio — decisão do cliente, não técnica.

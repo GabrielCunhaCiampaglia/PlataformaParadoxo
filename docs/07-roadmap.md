@@ -16,7 +16,8 @@
 - [x] Lista de perguntas consolidada
 - [ ] **Conversa com o cliente sobre as perguntas 🔴**
 - [ ] Revisão dos documentos 02, 03 e 05 pelo cliente
-- [ ] `sheet_template` v1 escrito e aprovado
+- [x] Ficha oficial recebida, versionada e dissecada (doc 09)
+- [ ] `sheet_template` v2 escrito e aprovado
 
 **Saída:** especificação aprovada. Sem isso, a Fase 2 não pode começar.
 
@@ -82,19 +83,20 @@ Critérios objetivos de aprovação e planos B em [08 — Rolagem 3D §4](08-rol
 
 ---
 
-## Fase 3 — Ficha ⏸️ *aguardando a definição do cliente*
+## Fase 3 — Ficha 🔓 *destravada*
 
-> A ficha ficou **em aberto por decisão do cliente** (19/08/2026). O `sheet_template` v1 é
-> publicado vazio; a definição chega depois e vira o v2, sem migration nem redeploy.
+> A ficha **chegou** em 20/08/2026 e está dissecada em [09](09-ficha-e-sistema.md), com o
+> PDF versionado em `docs/fontes/`. O dataset está tipado e testado em `packages/sheet`, e
+> o painel já roda sobre a mesa 3D. O `sheet_template` v2 pode ser escrito agora.
+>
+> Falta **S21** — os traços bloqueados fixam perícias em 90 e 95 contra o teto impresso de
+> 85 — e **M4**, se o Mestre edita a ficha do jogador.
 
-O trabalho que **não** depende da definição pode ser feito desde já:
-
-- `packages/sheet-schema`: tipos e validação do template
-- Renderizador de ficha dirigido pelo template — ele é genérico por natureza
-- Edição com salvamento otimista e sincronização
-
-O que espera a definição: o conteúdo do template e a **integração com a Fase 2** (tocar numa
-Perícia rola aquela Perícia). Também depende de **M4** — se o Mestre edita a ficha do jogador.
+- [x] `packages/sheet`: tipos, dataset oficial e validação da distribuição
+- [x] Painel da ficha sobre a mesa 3D, dirigido pelos dados do PDF
+- [x] **Integração com a Fase 2**: tocar numa Perícia rola aquela Perícia
+- [ ] `sheet_template` v2 publicado como dado, não como código
+- [ ] Edição com salvamento otimista e sincronização *(depende da Fase 1)*
 
 **Saída demonstrável:** ficha real, jogável, com rolagem integrada. É aqui que a
 plataforma passa a ser "única".

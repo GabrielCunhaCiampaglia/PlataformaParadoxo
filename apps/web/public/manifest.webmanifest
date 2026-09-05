@@ -2,13 +2,25 @@
   "name": "Paradoxo Epifânico",
   "short_name": "Paradoxo",
   "description": "Plataforma de mesa do RPG Paradoxo Epifânico.",
-  "start_url": "/",
+  "start_url": "./",
   "display": "standalone",
   "orientation": "portrait",
   "background_color": "#05040a",
   "theme_color": "#05040a",
   "lang": "pt-BR",
   "icons": [
-    { "src": "/isologo.png", "sizes": "512x512", "type": "image/png", "purpose": "any" }
-  ]
+    {
+      "src": "./isologo.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "./isologo.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "maskable"
+    }
+  ],
+  "scope": "./"
 }
